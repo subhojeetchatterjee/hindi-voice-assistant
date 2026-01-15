@@ -73,6 +73,29 @@ class AdvancedGrammarCorrector:
             (r'\btym\b', 'time'),
             (r'\bplz\b', 'please'),
             (r'\bstap\b', 'stop'),
+            
+            # Romanized to Devanagari Bridge (Crucial for Whisper Base)
+            (r'\bsamay\b', 'समय'),
+            (r'\bkya\b', 'क्या'),
+            (r'\bhai\b', 'है'),
+            (r'\bha\b', 'है'),
+            (r'\btariq\b', 'तारीख'),
+            (r'\btarikh\b', 'तारीख'),
+            (r'\bnamaste\b', 'नमस्ते'),
+            (r'\bshukriya\b', 'शुक्रिया'),
+            (r'\baaj\b', 'आज'),
+            (r'\bka\b', 'का'),
+            (r'\bki\b', 'की'),
+            (r'\bkitne\b', 'कितने'),
+            (r'\bbaje\b', 'बजे'),
+            (r'\bmadad\b', 'मदद'),
+            (r'\bhelp\b', 'help'),
+            (r'\bband\b', 'बंद'),
+            (r'\bkaro\b', 'करो'),
+            (r'\balvida\b', 'अलविदा'),
+            (r'\bbye\b', 'bye'),
+            (r'\bdhanyawad\b', 'धन्यवाद'),
+            (r'\bdhanyavad\b', 'धन्यवाद'),
         ]
         
         try:
@@ -87,10 +110,10 @@ class AdvancedGrammarCorrector:
         if not text: return ""
         original_text = text
         
-        # Pass 1: Regex patterns
+        # Pass 1: Regex patterns (Case-insensitive for Romanized parts)
         corrected = text
         for pattern, replacement in self.error_patterns:
-            corrected = re.sub(pattern, replacement, corrected)
+            corrected = re.sub(pattern, replacement, corrected, flags=re.IGNORECASE)
         
         # Pass 2: Word-level fuzzy correction
         words = corrected.split()
@@ -144,17 +167,21 @@ class RobustIntentClassifier:
         
         # Fuzzy fallback patterns
         self.fallback_patterns = {
-            'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म'],
-            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे'],
-            'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर'],
-            'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम'],
-            'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता'],
-            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया'],
-            'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत'],
+            'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म', 'band'],
+            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'tim'],
+            'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi'],
+            'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste'],
+            'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता', 'alvida'],
+            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya'],
+            'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
         }
 
     def classify(self, text):
         if not text.strip(): return "unknown", 0.0
+        
+        # Strip punctuation for more robust matching
+        raw_text = text
+        text = re.sub(r'[.,!?।|]', '', text).strip()
         
         # Stage 1: IndicBERT
         inputs = self.tokenizer(text, return_tensors="pt", max_length=64, truncation=True, padding=True).to(self.device)
@@ -166,38 +193,35 @@ class RobustIntentClassifier:
         intent = self.id2label.get(str(idx.item()), "unknown")
         confidence = conf.item()
         
-        # High confidence? Trust IndicBERT
-        if confidence >= 0.70:
+        # High confidence? Trust IndicBERT (Reduced to 0.75 for better recall)
+        if confidence >= 0.75:
             return intent, confidence
             
-        # Low confidence? Try fuzzy fallback
-        print(f"⚠️  Low confidence ({confidence:.1%}), trying fuzzy fallback...")
+        # Try fuzzy fallback for EVERYTHING else
         fallback_intent = self._fuzzy_fallback(text)
         if fallback_intent:
             print(f"✓ Fuzzy fallback matched: {fallback_intent}")
-            return fallback_intent, 0.85
+            return fallback_intent, 0.90
             
-        # Medium confidence (50-70%)? Use IndicBERT result
-        if confidence >= 0.50:
+        # Only trust IndicBERT if confidence is decent (70%+) and fallback failed
+        if confidence >= 0.70:
             return intent, confidence
             
         return "unknown", confidence
 
     def _fuzzy_fallback(self, text):
-        from rapidfuzz import fuzz
         text_lower = text.lower()
         
-        scores = {}
+        # Check for whole-word presence with a focus on noise-resiliency
         for intent, keywords in self.fallback_patterns.items():
-            max_score = 0
-            for keyword in keywords:
-                score = fuzz.partial_ratio(text_lower, keyword.lower())
-                max_score = max(max_score, score)
-            scores[intent] = max_score
-            
-        best_intent = max(scores, key=scores.get)
-        if scores[best_intent] >= 75:
-            return best_intent
+            for kw in keywords:
+                # Use Unicode-aware word boundaries
+                # (?<!\w) means "not preceded by a word character"
+                # (?!\w) means "not followed by a word character"
+                # In Python 3, \w includes Unicode letters by default
+                pattern = r'(?i)(?<!\w)' + re.escape(kw.lower()) + r'(?!\w)'
+                if re.search(pattern, text_lower):
+                    return intent
         return None
 
 # ============================================================

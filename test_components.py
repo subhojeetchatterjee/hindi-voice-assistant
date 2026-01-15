@@ -116,8 +116,9 @@ def test_robust_intent():
     """Test Phase 4: Robust Intent Classification"""
     print("🧠 Testing Robust Intent Classification...")
     try:
-        from voice_assistant import RobustIntentClassifier
+        from voice_assistant import RobustIntentClassifier, AdvancedGrammarCorrector
         classifier = RobustIntentClassifier()
+        corrector = AdvancedGrammarCorrector()
         
         test_cases = [
             ("समय क्या है", "time"),        # Direct match
@@ -127,11 +128,17 @@ def test_robust_intent():
             ("धन्यवाद", "thank_you"),     # Direct
             ("सहायता", "help"),           # Fallback
             ("बंद करो", "stop"),          # Direct
+            ("abhi samay kya hai", "time"), # Romanized Robustness
+            ("tariq batao", "date"),       # Phonetic + Romanized
+            ("abhi", "unknown"),           # Substring false positive test
+            ("Teeke, alvida", "goodbye"),  # Punctuation + Noise Resiliency
+            ("OK, dhanyawad!", "thank_you"), # Romanized + Punctuation
         ]
         
         passed = 0
         for text, expected in test_cases:
-            intent, confidence = classifier.classify(text)
+            corrected = corrector.correct(text)
+            intent, confidence = classifier.classify(corrected)
             status = "✓" if intent == expected else "✗"
             print(f"  {status} '{text}' → {intent} ({confidence:.1%})")
             if intent == expected: passed += 1
