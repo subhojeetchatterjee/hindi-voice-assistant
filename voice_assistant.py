@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Real-time Hindi Voice Assistant with 3-Layer Robustness
+Real-time Hindi Voice Assistant with Faster-Whisper
+Optimized for Raspberry Pi 5 (4GB RAM)
 Bharat AI-SoC Challenge Submission
 
 Architecture:
-- Layer 1: Whisper Small (High-accuracy Hindi ASR)
+- Layer 1: Faster-Whisper (High-speed, Ind8-quantized Hindi ASR)
 - Layer 2: Advanced phonetic grammar correction (Regex + RapidFuzz)
 - Layer 3: Robust intent classification with IndicBERT + Fuzzy Fallback
 """
@@ -18,10 +19,9 @@ import torch
 import re
 import pyaudio
 import numpy as np
-import whisper
-import webrtcvad
 import collections
 import subprocess
+import gc
 from datetime import datetime
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
@@ -36,7 +36,7 @@ class AdvancedGrammarCorrector:
         # Core vocabulary by intent category
         self.core_vocabulary = {
             'stop': ['बंद', 'बन्द', 'स्टॉप', 'स्टप', 'stop', 'रुको', 'रूको', 'रुक'],
-            'command_stop': ['करो', 'करदो', 'कर', 'कर दो', 'हो', 'हो जाओ'],
+            'command_stop': ['करो', 'करदो', 'कर', 'कर do', 'हो', 'हो जाओ'],
             'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे'],
             'time_query': ['क्या', 'कितने', 'कितना', 'बताओ', 'बतओ', 'what', 'कैसा'],
             'date': ['तारीख', 'तिथि', 'डेट', 'date', 'दिन', 'आज'],
@@ -207,7 +207,7 @@ class RealtimeVoiceAssistant:
     def __init__(self):
         print("=" * 60)
         print("Initializing Real-time Hindi Voice Assistant")
-        print("3-Layer Robustness System")
+        print("High-Speed Optimization (Pi 5)")
         print("=" * 60)
         
         self.RATE = 16000
@@ -222,9 +222,26 @@ class RealtimeVoiceAssistant:
         
         self.audio = pyaudio.PyAudio()
         
-        # Layer 1: Whisper Small (better ASR)
-        print("\n[Layer 1] Loading Whisper Small...")
-        self.asr_model = whisper.load_model("small")
+        # Layer 1: ASR Loading (Faster-Whisper with Fallback)
+        try:
+            from faster_whisper import WhisperModel
+            print("\n[Layer 1] Loading Faster-Whisper (Base, Int8 quantized)...")
+            self.asr_model = WhisperModel(
+                "base",                     # Model size (Base for RPi 5 speed)
+                device="cpu",               # CPU inference
+                compute_type="int8",        # 8-bit quantization (Speed boost)
+                cpu_threads=4,              # Pi 5 optimization
+                num_workers=1               # Single worker for stability
+            )
+            self.use_faster_whisper = True
+            print("✓ Faster-Whisper loaded (optimized for Pi 5)")
+        except Exception as e:
+            print(f"⚠️  Faster-Whisper failed: {e}")
+            print("   Falling back to standard Whisper (will be slower)")
+            import whisper
+            self.asr_standard = whisper.load_model("base")
+            self.use_faster_whisper = False
+            
         self.TEMP_WAV = "temp_input.wav"
         
         # Layer 2: Advanced Grammar Corrector
@@ -246,6 +263,8 @@ class RealtimeVoiceAssistant:
             'July': 'जुलाई', 'August': 'अगस्त', 'September': 'सितंबर',
             'October': 'अक्टूबर', 'November': 'नवंबर', 'December': 'दिसंबर'
         }
+        
+        gc.collect() # Clean up after model loading
         print("\n✓ All systems ready!\n")
 
     def record_with_vad(self):
@@ -295,12 +314,11 @@ class RealtimeVoiceAssistant:
         
         duration = time.time() - speech_start
         if triggered and duration >= self.min_speech_duration:
-            wf = wave.open(self.TEMP_WAV, 'wb')
-            wf.setnchannels(self.CHANNELS)
-            wf.setsampwidth(self.audio.get_sample_size(self.FORMAT))
-            wf.setframerate(self.RATE)
-            wf.writeframes(b''.join(frames))
-            wf.close()
+            with wave.open(self.TEMP_WAV, 'wb') as wf:
+                wf.setnchannels(self.CHANNELS)
+                wf.setsampwidth(self.audio.get_sample_size(self.FORMAT))
+                wf.setframerate(self.RATE)
+                wf.writeframes(b''.join(frames))
             return True
         return False
 
@@ -348,8 +366,23 @@ class RealtimeVoiceAssistant:
             while True:
                 if self.record_with_vad():
                     start = time.time()
-                    result = self.asr_model.transcribe(self.TEMP_WAV, language="hi", fp16=False)
-                    raw_text = result['text'].strip()
+                    
+                    if self.use_faster_whisper:
+                        # Transcribe using faster-whisper
+                        # Returns: (segments_generator, transcription_info)
+                        segments, info = self.asr_model.transcribe(
+                            self.TEMP_WAV,
+                            beam_size=1,            # Greedy decoding (faster)
+                            language="hi",          # Hindi
+                            vad_filter=False,       # Already using webrtcvad
+                            condition_on_previous_text=False # Faster
+                        )
+                        raw_text = " ".join([segment.text for segment in segments]).strip()
+                    else:
+                        # Fallback to standard whisper
+                        result = self.asr_standard.transcribe(self.TEMP_WAV, language="hi", fp16=False)
+                        raw_text = result['text'].strip()
+                        
                     print(f"📝 Raw transcription: '{raw_text}' ({time.time()-start:.2f}s)")
                     
                     corrected = self.corrector.correct(raw_text)

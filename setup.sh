@@ -38,11 +38,12 @@ echo "🛠️ Installing Python dependencies..."
 pip install --upgrade pip
 # We use torch and transformers for Phase 2 IndicBERT intent recognition
 # webrtcvad is added for Phase 3 real-time voice activity detection
-pip install openai-whisper pyaudio numpy piper-tts rapidfuzz torch transformers webrtcvad
+# faster-whisper is added for Phase 5 high-speed optimization (Pi 5)
+pip install openai-whisper faster-whisper pyaudio numpy piper-tts rapidfuzz torch transformers webrtcvad
 
-# 4. Pre-download Whisper small model
-echo "📥 Pre-downloading Whisper 'small' model (Phase 4 upgrade)..."
-python3 -c "import whisper; whisper.load_model('small')"
+# 4. Pre-download Whisper base model
+echo "📥 Pre-downloading Whisper 'base' model (optimized for Pi 5)..."
+python3 -c "import whisper; whisper.load_model('base')"
 
 # 5. Setup Piper TTS for natural voice
 echo "🎤 Setting up Piper TTS for natural voice..."

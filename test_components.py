@@ -142,28 +142,28 @@ def test_robust_intent():
         print(f"❌ Robust intent test failed: {e}")
         return False
 
-def test_asr_small():
-    """Test Whisper Small loading"""
-    print("📝 Testing Whisper Small loading...")
+def test_asr_faster_whisper():
+    """Test Phase 5: Faster-Whisper benchmark"""
+    print("📝 Testing Faster-Whisper (Int8 Optimized)...")
     try:
-        import whisper
-        start = time.time()
-        model = whisper.load_model("small")
-        print(f"✅ Whisper Small loaded in {time.time()-start:.2f}s")
+        from faster_whisper import WhisperModel
+        start_load = time.time()
+        model = WhisperModel("base", device="cpu", compute_type="int8", cpu_threads=4)
+        print(f"✅ Faster-Whisper loaded in {time.time()-start_load:.2f}s")
         return True
     except Exception as e:
-        print(f"❌ ASR test failed: {e}")
+        print(f"❌ Faster-Whisper test failed: {e}")
         return False
 
 if __name__ == "__main__":
     print("============================================================")
-    print("🧪 Component Verification - Phase 4: 3-Layer Robustness")
+    print("🧪 Component Verification - Phase 5: High-Speed Optimization")
     print("============================================================")
     
     results = [
+        ("Faster-Whisper (small-int8)", test_asr_faster_whisper),
         ("Advanced Grammar", test_advanced_grammar),
         ("Robust Intent (IndicBERT + Fuzzy)", test_robust_intent),
-        ("Whisper Small Model", test_asr_small),
         ("Piper TTS (Natural Voice)", test_piper_tts),
         ("Microphone Access", test_mic),
     ]
