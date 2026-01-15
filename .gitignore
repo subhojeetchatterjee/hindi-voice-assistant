@@ -1,0 +1,19 @@
+# Ignore Virtual Environment (Critical - this likely has thousands of files)
+venv/
+env/
+.venv/
+
+# Ignore Models (Too big for GitHub)
+models/
+hindi_intent_model_final/
+*.bin
+*.pt
+*.onnx
+
+# Ignore Cache
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# Ignore Temp Audio
+*.wav
