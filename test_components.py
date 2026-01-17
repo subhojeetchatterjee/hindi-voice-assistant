@@ -133,6 +133,22 @@ def test_robust_intent():
             ("abhi", "unknown"),           # Substring false positive test
             ("Teeke, alvida", "goodbye"),  # Punctuation + Noise Resiliency
             ("OK, dhanyawad!", "thank_you"), # Romanized + Punctuation
+            
+            # New Phase 8 Intents
+            ("नाचो", "dance"),            
+            ("मोसम कैसा है", "weather"),   
+            ("मजाक सुनाओ", "joke"),        
+            ("गाना बजाओ", "music"),       
+            ("अलार्म सेट करो", "alarm"),   
+            ("समाचार बताओ", "news"),      
+            
+            # Phase 8 Robustness Fixes (Reported by User)
+            ("alum lakao alum", "alarm"),    # Phonetic Romanized
+            ("samae batau", "time"),         # Phonetic Romanized
+            ("mujay gana sumna hai", "music"), # Phonetic Romanized
+            ("naaj satay hai", "dance"),     # Phonetic Romanized
+            ("Vither Batai", "weather"),     # Hallucinated "joke" -> weather
+            ("آچ کا سمचार बताओ", "news"),    # Urdu Script Bridge
         ]
         
         passed = 0

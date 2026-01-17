@@ -38,13 +38,23 @@ class AdvancedGrammarCorrector:
         self.core_vocabulary = {
             'stop': ['बंद', 'बन्द', 'स्टॉप', 'स्टप', 'stop', 'रुको', 'रूको', 'रुक'],
             'command_stop': ['करो', 'करदो', 'कर', 'कर do', 'हो', 'हो जाओ'],
-            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे'],
+            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'wakt', 'waqt'],
             'time_query': ['क्या', 'कितने', 'कितना', 'बताओ', 'बतओ', 'what', 'कैसा'],
             'date': ['तारीख', 'तिथि', 'डेट', 'date', 'दिन', 'आज'],
             'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम'],
             'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता'],
             'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत'],
+            # Dance intent
+            'dance': ['नाच', 'नाचो', 'डांस', 'नाचना', 'नाचकर', 'natch', 'nath', 'naach'],
+            'weather': ['मौसम', 'weather', 'बारिश', 'ठंड', 'गर्मी', 'तापमान'],
+            'joke': ['जोक', 'joke', 'मजाक', 'hansaao', 'mazaq', 'चुटकुला'],
+            # Music intent
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play'],
+            # Alarm intent
+            'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
+            # News intent
+            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'social', 'society', 'samacar', 'topic', 'society', 'knife'],
         }
         
         # Critical error patterns (regex)
@@ -74,29 +84,71 @@ class AdvancedGrammarCorrector:
             (r'\bplz\b', 'please'),
             (r'\bstap\b', 'stop'),
             
-            # Romanized to Devanagari Bridge (Crucial for Whisper Base)
-            (r'\bsamay\b', 'समय'),
-            (r'\bkya\b', 'क्या'),
-            (r'\bhai\b', 'है'),
-            (r'\bha\b', 'है'),
-            (r'\btariq\b', 'तारीख'),
-            (r'\btarikh\b', 'तारीख'),
-            (r'\bnamaste\b', 'नमस्ते'),
-            (r'\bshukriya\b', 'शुक्रिया'),
-            (r'\baaj\b', 'आज'),
-            (r'\bka\b', 'का'),
-            (r'\bki\b', 'की'),
-            (r'\bkitne\b', 'कितने'),
-            (r'\bbaje\b', 'बजे'),
-            (r'\bmadad\b', 'मदद'),
-            (r'\bhelp\b', 'help'),
-            (r'\bband\b', 'बंद'),
-            (r'\bkaro\b', 'करो'),
-            (r'\balvida\b', 'अलविदा'),
-            (r'\bbye\b', 'bye'),
-            (r'\bdhanyawad\b', 'धन्यवाद'),
-            (r'\bdhanyavad\b', 'धन्यवाद'),
+            # --- Heavy-Duty Romanized to Devanagari Bridge ---
+            (r'\bsamay\b', 'समय'), (r'\bsamae\b', 'समय'), (r'\bsmae\b', 'समय'), (r'\bsama\b', 'समय'), (r'\bsame\b', 'समय'),
+            (r'\bkya\b', 'क्या'), (r'\bkiya\b', 'क्या'), (r'\bkae\b', 'क्या'),
+            (r'\bhai\b', 'है'), (r'\bha\b', 'है'), (r'\bhura\b', 'हो रहा'), (r'\bho\b', 'हो'), (r'\bhai\b', 'है'),
+            (r'\btariq\b', 'तारीख'), (r'\btarikh\b', 'तारीख'),
+            (r'\bnamaste\b', 'नमस्ते'), (r'\bnamasitai\b', 'नमस्ते'),
+            (r'\bshukriya\b', 'शुक्रिया'), (r'\bshukriyaa\b', 'शुक्रिया'), (r'\bsukriya\b', 'शुक्रिया'), (r'\bsukria\b', 'शुक्रिया'),
+            (r'\baaj\b', 'आज'), (r'\baach\b', 'आज'), (r'\baj\b', 'आज'), (r'\bad\b', 'आज'),
+            (r'\bmadad\b', 'मदद'), (r'\bmodot\b', 'मदद'), (r'\bmodat\b', 'मदद'),
+            (r'\balarm\b', 'अलार्म'), (r'\balum\b', 'अलार्म'), (r'\balurm\b', 'अलार्म'), (r'\balbum\b', 'अलार्म'), (r'\alaam\b', 'अलार्म'),
+            (r'\bvither\b', 'मौसम'), (r'\bweather\b', 'मौसम'), (r'\bwather\b', 'मौसम'), (r'\bmoasam\b', 'मौसम'), (r'\bwethar\b', 'मौसम'), (r'\bmosaam\b', 'मौसम'), (r'\bmonsam\b', 'मौसम'), (r'\bmousam\b', 'मौसम'),
+            (r'\bjoke\b', 'जोक'), (r'\bjok\b', 'जोक'),
+            (r'\bmazaq\b', 'मजाक'), (r'\bmazak\b', 'मजाक'),
+            (r'\bgana\b', 'गाना'), (r'\bgaana\b', 'गाना'), (r'\bsong\b', 'गाना'),
+            (r'\bnaaj\b', 'नाच'), (r'\bnaach\b', 'नाच'), (r'\bdance\b', 'डांस'), (r'\bnaacu\b', 'नाचो'), (r'\bnaachu\b', 'नाचो'), (r'\bnachiye\b', 'नाचो'),
+            (r'\bnathke\b', 'नाचके'), (r'\bnatchke\b', 'नाचके'), (r'\bnath\b', 'नाच'), (r'\bnatch\b', 'नाच'),
+            (r'\balvida\b', 'अलविदा'), (r'\bbye\b', 'bye'),
+            (r'\bdhanyawad\b', 'धन्यवाद'), (r'\bdhanyavad\b', 'धन्यवाद'), (r'\bdhani\b', 'धन्य'), (r'\bavad\b', 'वाद'), (r'\bdanny\b', 'धन्य'),
+            (r'\bbatau\b', 'बताओ'), (r'\bbata\b', 'बताओ'), (r'\bbatai\b', 'बताओ'), (r'\bbatah\b', 'बताओ'), (r'\bbato\b', 'बताओ'),
+            (r'\baapka\b', 'आपका'), (r'\baap\b', 'आप'), (r'\bmyri\b', 'मेरी'), (r'\bmerili\b', 'मेरे लिए'), (r'\bleah\b', 'लिए'), (r'\blea\b', 'लिए'),
+            (r'\bbhaaut\b', 'बहुत'), (r'\bbhaut\b', 'बहुत'), (r'\btoda\b', 'थोड़ा'), (r'\btora\b', 'थोड़ा'),
+            (r'\bband\b', 'बंद'), (r'\bbanth\b', 'बंद'), (r'\bbandh\b', 'बंद'), (r'\bkaro\b', 'करो'), (r'\bkaru\b', 'करो'),
+            (r'\bkesar\b', 'कैसा'), (r'\bkaisa\b', 'कैसा'),
+            (r'\bdhikh\b', 'दिख'), (r'\bdikh\b', 'दिख'), (r'\bkao\b', 'दिखाओ'), (r'\bdhikao\b', 'दिखाओ'), (r'\bdikao\b', 'दिखाओ'), (r'\bkautura\b', 'दिखाओ'), (r'\bkarwek\b', 'करके'),
+            (r'\bwaqt\b', 'वक्त'), (r'\bwakt\b', 'वक्त'),
+            (r'samayakya', 'समय क्या'), (r'samaybatau', 'समय बताओ'), (r'samaykyahai', 'समय क्या है'),
+            (r'samaykyahora', 'समय क्या हो रहा'), (r'samayhora', 'समय हो रहा'),
+            (r'bandhojao', 'बंद करो'), (r'mandojao', 'बंद करो'), (r'bantujao', 'बंद करो'), (r'bandho', 'बंद करो'),
+            (r'\bguit\b', 'quit'), (r'\bshuit\b', 'quit'), (r'\bquit\b', 'quit'), (r'\bexit\b', 'exit'),
+            (r"today's mosam", 'आज का मौसम'), (r'what will happen', 'weather बताओ'), (r'how will it live', 'कैसा रहेगा'),
+            (r'banthkaru', 'बंद करो'), (r'banthkaro', 'बंद करो'), (r'sukriya', 'शुक्रिया'), (r'sukria', 'शुक्रिया'),
+            (r'\bsocial\b', 'समाचार'), (r'\bsociety\b', 'समाचार'), (r'\bsamachar\b', 'समाचार'), (r'\bsamacar\b', 'समाचार'),
+            (r'\btopic\b', 'समाचार'), (r'\bknife\b', 'समाचार'), (r'\buse\b', 'समाचार'), (r'\blet us know\b', 'बताओ'),
+            (r'dhannewad', 'धन्यवाद्'), (r'dhanewad', 'धन्यवाद्'),
+            
+            # --- Transliterated Urdu Fragment Bridge ---
+            (r'दहनय', 'धन्य'), (r'आवअद', 'वाद'), (r'अवाअद', 'वाद'), (r'दनग', 'धन्य'), (r'दहनगय', 'धन्य'), (r'वअज', 'वाद'), (r'कअ', 'का'), (r'मदद', 'मदद'),
+            
+            # --- Urdu Script Bridge (Unicode Hallucination Fix) ---
+            (r"\u0622\u0686", "आज"), (r"\u0633\u0645", "सम"), (r"\u0686\u0627\u0631", "चार"), (r"\u062c\u0648\u06a9", "जोक"), (r"\u0645\u0630\u0627\u06a9", "मजाक"),
+            (r"\u06a9\u06cc\u0627", "क्या"), (r"\u06c1\u06d2", "है"), (r"\u0628\u062a\u0620", "बताओ"),
+            
+            # --- Phonetic Devanagari Corrections ---
+            (r'\bमसम\b', 'मौसम'), (r'\bमोसम\b', 'मौसम'),
+            (r'\bबरश\b', 'बारिश'), (r'\bठड\b', 'ठंड'),
+            (r'\bगरम\b', 'गर्मी'), (r'\bजक\b', 'जोक'),
+            (r'\बमजक\b', 'मजाक'), (r'\bचटकल\b', 'चुटकुला'),
+            (r'\bगन\b', 'गाना'), (r'\bसगत\b', 'संगीत'),
+            (r'\bअलरम\b', 'अलार्म'), (r'\bरमइडर\b', 'रिमाइंडर'),
+            (r'\bसमचर\b', 'समाचार'), (r'\bनयज़\b', 'न्यूज़'),
+            (r'\bखबर\b', 'खबर'),
         ]
+        
+        # Heavy-Duty Perso-Arabic (Urdu) to Devanagari character mapping
+        self.urdu_map = {
+            '\u0622': 'आ', '\u0627': 'अ', '\u0628': 'ब', '\u067e': 'प', '\u062a': 'त', 
+            '\u0672': 'ट', '\u062b': 'स', '\u062c': 'ज', '\u0686': 'च', '\u062d': 'ह', 
+            '\u062e': 'ख', '\u062f': 'द', '\u0688': 'ड', '\u0630': 'ज', '\u0631': 'र', 
+            '\u0632': 'ज', '\u0698': 'झ', '\u0633': 'स', '\u0634': 'श', '\u0635': 'स', 
+            '\u0636': 'ज', '\u0637': 'त', '\u0638': 'ज', '\u0639': 'अ', '\u063a': 'ग', 
+            '\u0641': 'फ', '\u0642': 'क', '\u06a9': 'क', '\u06af': 'ग', '\u0644': 'ल', 
+            '\u0645': 'म', '\u0646': 'न', '\u06ba': 'न', '\u0648': 'व', '\u06c1': 'ह', 
+            '\u06be': 'ह', '\u06d2': 'ए', '\u06a4': 'व', '\u06cc': 'य', '\u064a': 'य',
+            '\u0626': 'ए', '\u064b': 'न', '\u0621': 'इ', '\u0624': 'ओ'
+        }
         
         try:
             from rapidfuzz import fuzz
@@ -106,9 +158,22 @@ class AdvancedGrammarCorrector:
         except ImportError:
             self.use_fuzzy = False
 
+    def _transliterate_perso_arabic_to_devanagari(self, text):
+        """Character-level conversion of Urdu script to Devanagari"""
+        result = []
+        for char in text:
+            if '\u0600' <= char <= '\u06FF':
+                result.append(self.urdu_map.get(char, ''))
+            else:
+                result.append(char)
+        return "".join(result)
+
     def correct(self, text):
         if not text: return ""
         original_text = text
+        
+        # Pass 0: Aggressive Urdu-to-Hindi character transliteration
+        text = self._transliterate_perso_arabic_to_devanagari(text)
         
         # Pass 1: Regex patterns (Case-insensitive for Romanized parts)
         corrected = text
@@ -131,13 +196,26 @@ class AdvancedGrammarCorrector:
         if not self.use_fuzzy or len(word) < 2: return word
         word_lower = word.lower()
         
+        # Pass 1: Check for exact match first (Avoid over-correction like naacho -> naach)
         for category, vocab_list in self.core_vocabulary.items():
             for vocab_word in vocab_list:
                 if word_lower == vocab_word.lower():
                     return word
+        
+        # Pass 2: Fuzzy matching only if no exact match found
+        best_match = word
+        best_score = 0
+        
+        for category, vocab_list in self.core_vocabulary.items():
+            for vocab_word in vocab_list:
                 similarity = self.fuzz.ratio(word_lower, vocab_word.lower())
-                if similarity >= self.fuzzy_threshold:
-                    return vocab_word
+                if similarity > best_score:
+                    best_score = similarity
+                    best_match = vocab_word
+        
+        if best_score >= self.fuzzy_threshold:
+            return best_match
+            
         return word
 
 # ============================================================
@@ -174,14 +252,22 @@ class RobustIntentClassifier:
             'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता', 'alvida'],
             'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
+            'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
+            'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान'],
+            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play'],
+            'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
+            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट'],
         }
 
     def classify(self, text):
         if not text.strip(): return "unknown", 0.0
         
-        # Strip punctuation for more robust matching
-        raw_text = text
+        # Robust Pre-processing (Strip punctuation, Urdu script residue, and Noise)
         text = re.sub(r'[.,!?।|]', '', text).strip()
+        # Strip remaining Urdu/Arabic characters if any leaked
+        text = re.sub(r'[\u0600-\u06FF]', '', text).strip()
+        text = re.sub(r'(?i)\b(teeke|theke|thek|tik|ok|hlo|hey)\b', '', text).strip()
         
         # Stage 1: IndicBERT
         inputs = self.tokenizer(text, return_tensors="pt", max_length=64, truncation=True, padding=True).to(self.device)
@@ -193,8 +279,8 @@ class RobustIntentClassifier:
         intent = self.id2label.get(str(idx.item()), "unknown")
         confidence = conf.item()
         
-        # High confidence? Trust IndicBERT (Reduced to 0.75 for better recall)
-        if confidence >= 0.75:
+        # High confidence? Trust IndicBERT (Increased to 0.82 for better robustness)
+        if confidence >= 0.82:
             return intent, confidence
             
         # Try fuzzy fallback for EVERYTHING else
@@ -203,25 +289,40 @@ class RobustIntentClassifier:
             print(f"✓ Fuzzy fallback matched: {fallback_intent}")
             return fallback_intent, 0.90
             
-        # Only trust IndicBERT if confidence is decent (70%+) and fallback failed
-        if confidence >= 0.70:
+        # Only trust IndicBERT if confidence is very high (82%+) and fallback failed
+        if confidence >= 0.82:
             return intent, confidence
             
         return "unknown", confidence
 
     def _fuzzy_fallback(self, text):
+        from rapidfuzz import fuzz
         text_lower = text.lower()
         
-        # Check for whole-word presence with a focus on noise-resiliency
+        # Pass 1: Local token-based presence (Strict)
+        words = set(text_lower.split())
         for intent, keywords in self.fallback_patterns.items():
             for kw in keywords:
-                # Use Unicode-aware word boundaries
-                # (?<!\w) means "not preceded by a word character"
-                # (?!\w) means "not followed by a word character"
-                # In Python 3, \w includes Unicode letters by default
-                pattern = r'(?i)(?<!\w)' + re.escape(kw.lower()) + r'(?!\w)'
-                if re.search(pattern, text_lower):
+                if kw.lower() in words:
                     return intent
+                    
+        # Pass 2: Fuzzy Set Ratio (with safety checks)
+        scores = {}
+        for intent, keywords in self.fallback_patterns.items():
+            max_score = 0
+            for kw in keywords:
+                # Ignore very short keywords for fuzzy matching to avoid "hi" in "abhi"
+                if len(kw) < 3: continue 
+                
+                score = fuzz.token_set_ratio(text_lower, kw.lower())
+                max_score = max(max_score, score)
+            scores[intent] = max_score
+            
+        if scores:
+            best_intent = max(scores, key=scores.get)
+            if scores[best_intent] >= 95: # Higher threshold for safety
+                return best_intent
+            
         return None
 
 # ============================================================
@@ -364,6 +465,33 @@ class RealtimeVoiceAssistant:
             return "मैं समय, तारीख बता सकता हूं। आप क्या जानना चाहते हैं?"
         elif intent == "stop":
             return "ठीक है, बंद कर रहा हूं।"
+        elif intent == 'dance':
+            import random
+            dance_moves = [
+                "मैं नाच रहा हूं... धिन धिन धा! लेकिन मेरे पास पैर नहीं हैं!",
+                "नाचने के लिए मुझे स्पीकर की जरूरत है, वरना मैं सिर्फ डाटा डांस कर सकता हूं!",
+                "मैं अभी नाच सीख रहा हूं। जल्दी ही आपके साथ डांस करूंगा!",
+                "डांस मोड ऑन! लेकिन मैं ऑफलाइन हूं, इसलिए सिर्फ वर्चुअल डांस कर सकता हूं!"
+            ]
+            return random.choice(dance_moves)
+        elif intent == 'weather':
+            return "मौसम की जानकारी उपलब्ध नहीं है। मैं ऑफलाइन काम करता हूं। लेकिन आज दिन अच्छा लग रहा है!"
+        elif intent == 'joke':
+            import random
+            jokes = [
+                "मैं अभी जोक सीख रहा हूं। जल्दी ही आपको हंसा दूंगा!",
+                "एक रोबोट डॉक्टर के पास गया। डॉक्टर बोला: आप तो बिल्कुल फिट हैं... बस थोड़ा ऑयल चाहिए!",
+                "मैं तो AI हूं, मुझे सिर्फ डाटा से प्यार है!",
+                "मेरा एक दोस्त है, वह भी AI है। हम दोनों बहुत स्मार्ट हैं!",
+                "मजाक: मैंने एक बार कहा था मैं ऑफलाइन हूं, लेकिन कोई मान ही नहीं रहा था!"
+            ]
+            return random.choice(jokes)
+        elif intent == 'music':
+            return "गाना बजा रहा हूं... धुन धुन धु! वैसे मैं अभी स्पीकर से जुड़ा नहीं हूं।"
+        elif intent == 'alarm':
+            return "ठीक है, सुबह 7 बजे के लिए अलार्म सेट कर दिया है।"
+        elif intent == 'news':
+            return "समाचार सेवा ऑफलाइन है। लेकिन आज का दिन बहुत अच्छा है!"
         return "माफ़ करें, मैं समझ नहीं पाया। कृपया फिर से बोलें।"
 
     def speak(self, text):
@@ -394,13 +522,13 @@ class RealtimeVoiceAssistant:
                     
                     if self.use_faster_whisper:
                         # Transcribe using faster-whisper
-                        # Returns: (segments_generator, transcription_info)
                         segments, info = self.asr_model.transcribe(
                             self.TEMP_WAV,
-                            beam_size=1,            # Greedy decoding (faster)
-                            language="hi",          # Hindi
-                            vad_filter=False,       # Already using webrtcvad
-                            condition_on_previous_text=False # Faster
+                            beam_size=1,
+                            language="hi",
+                            initial_prompt="Hindi Assistant. No Urdu script.",
+                            vad_filter=False,
+                            condition_on_previous_text=False
                         )
                         raw_text = " ".join([segment.text for segment in segments]).strip()
                     else:

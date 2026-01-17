@@ -22,6 +22,7 @@ elif [ "$OS" == "Linux" ]; then
     echo "🐧 detected Linux"
     echo "📦 Installing system dependencies via apt..."
     sudo apt-get update
+    sudo apt-get upgrade -y
     sudo apt-get install -y espeak-ng portaudio19-dev ffmpeg python3-dev python3-venv
 else
     echo "⚠️ Unsupported OS: $OS"
