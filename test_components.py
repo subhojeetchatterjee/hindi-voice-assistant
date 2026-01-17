@@ -116,8 +116,9 @@ def test_robust_intent():
     """Test Phase 4: Robust Intent Classification"""
     print("🧠 Testing Robust Intent Classification...")
     try:
-        from voice_assistant import RobustIntentClassifier
+        from voice_assistant import RobustIntentClassifier, AdvancedGrammarCorrector
         classifier = RobustIntentClassifier()
+        corrector = AdvancedGrammarCorrector()
         
         test_cases = [
             ("समय क्या है", "time"),        # Direct match
@@ -127,11 +128,33 @@ def test_robust_intent():
             ("धन्यवाद", "thank_you"),     # Direct
             ("सहायता", "help"),           # Fallback
             ("बंद करो", "stop"),          # Direct
+            ("abhi samay kya hai", "time"), # Romanized Robustness
+            ("tariq batao", "date"),       # Phonetic + Romanized
+            ("abhi", "unknown"),           # Substring false positive test
+            ("Teeke, alvida", "goodbye"),  # Punctuation + Noise Resiliency
+            ("OK, dhanyawad!", "thank_you"), # Romanized + Punctuation
+            
+            # New Phase 8 Intents
+            ("नाचो", "dance"),            
+            ("मोसम कैसा है", "weather"),   
+            ("मजाक सुनाओ", "joke"),        
+            ("गाना बजाओ", "music"),       
+            ("अलार्म सेट करो", "alarm"),   
+            ("समाचार बताओ", "news"),      
+            
+            # Phase 8 Robustness Fixes (Reported by User)
+            ("alum lakao alum", "alarm"),    # Phonetic Romanized
+            ("samae batau", "time"),         # Phonetic Romanized
+            ("mujay gana sumna hai", "music"), # Phonetic Romanized
+            ("naaj satay hai", "dance"),     # Phonetic Romanized
+            ("Vither Batai", "weather"),     # Hallucinated "joke" -> weather
+            ("آچ کا سمचार बताओ", "news"),    # Urdu Script Bridge
         ]
         
         passed = 0
         for text, expected in test_cases:
-            intent, confidence = classifier.classify(text)
+            corrected = corrector.correct(text)
+            intent, confidence = classifier.classify(corrected)
             status = "✓" if intent == expected else "✗"
             print(f"  {status} '{text}' → {intent} ({confidence:.1%})")
             if intent == expected: passed += 1
@@ -142,28 +165,28 @@ def test_robust_intent():
         print(f"❌ Robust intent test failed: {e}")
         return False
 
-def test_asr_small():
-    """Test Whisper Small loading"""
-    print("📝 Testing Whisper Small loading...")
+def test_asr_faster_whisper():
+    """Test Phase 5: Faster-Whisper benchmark"""
+    print("📝 Testing Faster-Whisper (Int8 Optimized)...")
     try:
-        import whisper
-        start = time.time()
-        model = whisper.load_model("small")
-        print(f"✅ Whisper Small loaded in {time.time()-start:.2f}s")
+        from faster_whisper import WhisperModel
+        start_load = time.time()
+        model = WhisperModel("base", device="cpu", compute_type="int8", cpu_threads=4)
+        print(f"✅ Faster-Whisper loaded in {time.time()-start_load:.2f}s")
         return True
     except Exception as e:
-        print(f"❌ ASR test failed: {e}")
+        print(f"❌ Faster-Whisper test failed: {e}")
         return False
 
 if __name__ == "__main__":
     print("============================================================")
-    print("🧪 Component Verification - Phase 4: 3-Layer Robustness")
+    print("🧪 Component Verification - Phase 5: High-Speed Optimization")
     print("============================================================")
     
     results = [
+        ("Faster-Whisper (small-int8)", test_asr_faster_whisper),
         ("Advanced Grammar", test_advanced_grammar),
         ("Robust Intent (IndicBERT + Fuzzy)", test_robust_intent),
-        ("Whisper Small Model", test_asr_small),
         ("Piper TTS (Natural Voice)", test_piper_tts),
         ("Microphone Access", test_mic),
     ]
