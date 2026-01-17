@@ -40,13 +40,33 @@ pip install --upgrade pip
 # We use torch and transformers for Phase 2 IndicBERT intent recognition
 # webrtcvad is added for Phase 3 real-time voice activity detection
 # faster-whisper is added for Phase 5 high-speed optimization (Pi 5)
-pip install openai-whisper faster-whisper pyaudio numpy piper-tts rapidfuzz torch transformers webrtcvad
+# optimum/onnxruntime is added for Phase 14 Radxa A76 optimization
+pip install openai-whisper faster-whisper pyaudio numpy piper-tts rapidfuzz torch transformers webrtcvad optimum[onnxruntime] psutil
 
 # 4. Pre-download Whisper base model
-echo "📥 Pre-downloading Whisper 'base' model (optimized for Pi 5)..."
+echo "📥 Pre-downloading Whisper 'base' model..."
 python3 -c "import whisper; whisper.load_model('base')"
 
-# 5. Setup Piper TTS for natural voice
+# 5. Intent Classifier Optimization (ONNX)
+echo "⚙️  Optimizing Intent Classifier (indicBERT -> ONNX INT8)..."
+if [ -f convert_indicbert_to_onnx.py ]; then
+    python3 convert_indicbert_to_onnx.py
+else
+    echo "⚠️  Conversion script not found, skipping ONNX optimization."
+fi
+
+# 6. System Hardware Optimization (Radxa/Linux)
+if [ "$OS" == "Linux" ]; then
+    echo "🏃  Detected Linux environment. Applying hardware optimizations..."
+    if [ -f optimize_system.py ]; then
+        echo "ℹ️  Entering sudo for CPU/Memory tuning..."
+        sudo python3 optimize_system.py
+    else
+        echo "⚠️  Optimization script not found, skipping."
+    fi
+fi
+
+# 7. Setup Piper TTS for natural voice
 echo "🎤 Setting up Piper TTS for natural voice..."
 mkdir -p models/hindi
 
@@ -72,6 +92,5 @@ echo ""
 echo "============================================================"
 echo "✅ Setup Complete!"
 echo "1. Activate venv: source venv/bin/activate"
-echo "2. Run tests: python3 test_components.py"
-echo "3. Run assistant: python3 voice_assistant.py"
+echo "2. Run assistant: python3 voice_assistant.py"
 echo "============================================================"
