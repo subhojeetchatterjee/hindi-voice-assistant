@@ -223,27 +223,70 @@ class AdvancedGrammarCorrector:
 # ============================================================
 
 class RobustIntentClassifier:
-    def __init__(self, model_path=None):
+    def __init__(self, model_path=None, use_onnx=True):
+        """
+        Initialize intent classifier with ONNX optimization
+        Falls back to PyTorch if ONNX model not found
+        """
         if model_path is None:
             script_dir = os.path.dirname(os.path.abspath(__file__))
             model_path = os.path.join(script_dir, 'hindi_intent_model_final')
-            
-        print(f"⚙️  Initializing Robust Intent Classifier from {model_path}...")
         
-        # Load IndicBERT
+        # Check for ONNX model
+        onnx_path = model_path.replace('_final', '_onnx_int8')
+        
+        if use_onnx and os.path.exists(onnx_path):
+            print(f"⚙️  Loading ONNX-optimized classifier from {os.path.basename(onnx_path)}...")
+            try:
+                self._load_onnx_model(onnx_path)
+                return  # Success, skip PyTorch loading
+            except Exception as e:
+                print(f"⚠️  ONNX loading failed: {e}")
+                print(f"   Falling back to PyTorch model...")
+        
+        # Load PyTorch model (original or fallback)
+        if use_onnx and not os.path.exists(onnx_path):
+            print(f"ℹ️  ONNX model not found at {os.path.basename(onnx_path)}")
+            print(f"   Using PyTorch model (run convert_indicbert_to_onnx.py to optimize)")
+        
+        print(f"⚙️  Loading PyTorch classifier from {os.path.basename(model_path)}...")
+        self._load_pytorch_model(model_path)
+
+    def _load_onnx_model(self, model_path):
+        """Load ONNX-optimized model"""
+        from optimum.onnxruntime import ORTModelForSequenceClassification
+        
+        # Load label map
         with open(os.path.join(model_path, 'label_map.json'), 'r') as f:
             self.id2label = json.load(f)['id2label']
-            
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            model_path,
-            torch_dtype=torch.float32 # Optimized for CPU
-        )
-        self.model.eval()
-        self.device = torch.device("cpu")
-        self.model.to(self.device)
         
-        # Fuzzy fallback patterns
+        # Load tokenizer and model
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.model = ORTModelForSequenceClassification.from_pretrained(
+            model_path,
+            provider="CPUExecutionProvider"
+        )
+        
+        self.device = torch.device("cpu")
+        self.model_type = "onnx"
+        
+        print("   ✓ ONNX INT8 model loaded")
+        
+        # Pin to A76 cores (Cubie A7A optimization)
+        try:
+            import psutil
+            p = psutil.Process()
+            p.cpu_affinity([0, 1])  # Cores 0-1 are Cortex-A76
+            print("   ✓ Process pinned to Cortex-A76 cores")
+        except Exception as e:
+            pass  # Not critical
+        
+        # Set thread limits for 6GB RAM
+        import os
+        os.environ['OMP_NUM_THREADS'] = '2'
+        torch.set_num_threads(2)
+        
+        # Robust fallback keywords for 13 intents
         self.fallback_patterns = {
             'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म', 'band'],
             'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'tim'],
@@ -257,7 +300,41 @@ class RobustIntentClassifier:
             'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
             'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play'],
             'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
-            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट'],
+            'news': [' समाचार', ' न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट'],
+        }
+
+    def _load_pytorch_model(self, model_path):
+        """Load original PyTorch model (fallback)"""
+        with open(os.path.join(model_path, 'label_map.json'), 'r') as f:
+            self.id2label = json.load(f)['id2label']
+        
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.model = AutoModelForSequenceClassification.from_pretrained(
+            model_path,
+            torch_dtype=torch.float32
+        )
+        self.model.eval()
+        self.device = torch.device("cpu")
+        self.model.to(self.device)
+        self.model_type = "pytorch"
+        
+        print("   ✓ PyTorch float32 model loaded")
+        
+        # Keep fallback patterns (add them here too)
+        self.fallback_patterns = {
+            'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म', 'band'],
+            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'tim'],
+            'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi'],
+            'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste'],
+            'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता', 'alvida'],
+            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya'],
+            'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
+            'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
+            'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान'],
+            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play'],
+            'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
+            'news': [' समाचार', ' न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट'],
         }
 
     def classify(self, text):
@@ -330,7 +407,30 @@ class RobustIntentClassifier:
 # ============================================================
 
 class RealtimeVoiceAssistant:
+    def _check_memory_safety(self):
+        """Ensure sufficient RAM for 6GB system"""
+        try:
+            import psutil
+            mem = psutil.virtual_memory()
+            
+            free_gb = mem.available / (1024**3)
+            total_gb = mem.total / (1024**3)
+            
+            print(f"💾 Memory: {free_gb:.1f}GB free / {total_gb:.1f}GB total")
+            
+            if mem.available < 2.5 * 1024**3:  # Less than 2.5GB free
+                print("⚠️  WARNING: Low memory!")
+                print(f"   Available: {free_gb:.1f}GB")
+                print(f"   Recommended: 2.5GB minimum")
+                print("   Close other applications for best performance.")
+            
+        except ImportError:
+            print("⚠️  psutil not installed (pip install psutil)")
+
     def __init__(self):
+        # Memory safety check
+        self._check_memory_safety()
+        
         print("=" * 60)
         print("Initializing Real-time Hindi Voice Assistant")
         print("High-Speed Optimization (Pi 5)")
