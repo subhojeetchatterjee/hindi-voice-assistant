@@ -39,11 +39,19 @@ pip install --upgrade pip
 # webrtcvad is added for Phase 3 real-time voice activity detection
 # faster-whisper is added for Phase 5 high-speed optimization (Pi 5)
 # optimum/onnxruntime is added for Phase 14 Radxa A76 optimization
-pip install openai-whisper faster-whisper pyaudio numpy piper-tts rapidfuzz torch transformers webrtcvad optimum[onnxruntime] psutil
+pip install openai-whisper faster-whisper pyaudio numpy piper-tts rapidfuzz torch transformers webrtcvad optimum[onnxruntime] psutil huggingface-hub
 
 # 4. Pre-download Whisper base model
 echo "📥 Pre-downloading Whisper 'base' model..."
 python3 -c "import whisper; whisper.load_model('base')"
+
+# 4.5 Download Intent Model from Hugging Face
+echo "📥 Downloading Intent Model from Hugging Face..."
+if [ ! -d "hindi_intent_model_final" ]; then
+    huggingface-cli download subhtech/hindi_intent_model_final --local-dir hindi_intent_model_final --local-dir-use-symlinks False
+else
+    echo "✅ Intent model folder already exists."
+fi
 
 # 5. Intent Classifier Optimization (ONNX)
 echo "⚙️  Optimizing Intent Classifier (indicBERT -> ONNX INT8)..."
