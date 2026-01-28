@@ -453,10 +453,10 @@ class RealtimeVoiceAssistant:
             from faster_whisper import WhisperModel
             print("\n[Layer 1] Loading Faster-Whisper (Base, Int8 quantized)...")
             self.asr_model = WhisperModel(
-                "base",                     # Model size (Base for RPi 5 speed)
+                "base",                     # Model size (Base for speed)
                 device="cpu",               # CPU inference
                 compute_type="int8",        # 8-bit quantization (Speed boost)
-                cpu_threads=4,              # Pi 5 optimization
+                cpu_threads=4,              # SBC optimization
                 num_workers=1               # Single worker for stability
             )
             self.use_faster_whisper = True
@@ -618,7 +618,7 @@ class RealtimeVoiceAssistant:
         try:
             while True:
                 if self.record_with_vad():
-                    start = time.time()
+                    start_thinking = time.time()
                     
                     if self.use_faster_whisper:
                         # Transcribe using faster-whisper
@@ -636,19 +636,26 @@ class RealtimeVoiceAssistant:
                         result = self.asr_standard.transcribe(self.TEMP_WAV, language="hi", fp16=False)
                         raw_text = result['text'].strip()
                         
-                    print(f"📝 Raw transcription: '{raw_text}' ({time.time()-start:.2f}s)")
+                    print(f"📝 Raw transcription: '{raw_text}' ({time.time()-start_thinking:.2f}s)")
                     
                     corrected = self.corrector.correct(raw_text)
                     
-                    start = time.time()
+                    intent_start = time.time()
                     intent, conf = self.intent_classifier.classify(corrected)
-                    print(f"🎯 Intent: {intent} (confidence: {conf:.1%}, {time.time()-start:.3f}s)")
+                    print(f"🎯 Intent: {intent} (confidence: {conf:.1%}, {time.time()-intent_start:.3f}s)")
                     
                     response = self.generate_response(intent)
+                    
+                    # 5-second thinking timeout check
+                    total_thinking_time = time.time() - start_thinking
+                    if total_thinking_time > 5.0:
+                        print(f"⚠️  Thinking timeout ({total_thinking_time:.2f}s > 5s). Using fallback.")
+                        response = "माफ़ करें, मैं समझ नहीं पाया। कृपया फिर से बोलें।"
+                    
                     print(f"💬 Response: {response}")
                     self.speak(response)
                     
-                    if intent in ["stop", "goodbye"]:
+                    if intent in ["stop", "goodbye"] and total_thinking_time <= 5.0:
                         print("\n👋 Goodbye!")
                         break
                     print("-" * 60)
