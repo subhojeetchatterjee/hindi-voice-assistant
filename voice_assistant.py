@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Real-time Hindi Voice Assistant with Faster-Whisper
-Optimized for Raspberry Pi 5 (4GB RAM)
+Optimized for SBC (Single Board Computer)
 Bharat AI-SoC Challenge Submission
 
 Architecture:
