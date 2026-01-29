@@ -131,26 +131,35 @@ class AdvancedGrammarCorrector:
             (r"\u0622\u0686", "आज"), (r"\u0633\u0645", "सम"), (r"\u0686\u0627\u0631", "चार"), (r"\u062c\u0648\u06a9", "जोक"), (r"\u0645\u0630\u0627\u06a9", "मजाक"),
             (r"\u06a9\u06cc\u0627", "क्या"), (r"\u06c1\u06d2", "है"), (r"\u0628\u062a\u0620", "बताओ"),
             
-            # --- Phonetic Devanagari Corrections ---
-            (r'\bमसम\b', 'मौसम'), (r'\bमोसम\b', 'मौसम'),
-            (r'\bबरश\b', 'बारिश'), (r'\bठड\b', 'ठंड'),
-            (r'\bगरम\b', 'गर्मी'), (r'\bजक\b', 'जोक'),
-            (r'\बमजक\b', 'मजाक'), (r'\bचटकल\b', 'चुटकुला'),
-            (r'\bगन\b', 'गाना'), (r'\bसगत\b', 'संगीत'),
-            (r'\bअलरम\b', 'अलार्म'), (r'\bरमइडर\b', 'रिमाइंडर'),
-            (r'\bसमचर\b', 'समाचार'), (r'\bनयज़\b', 'न्यूज़'),
-            (r'\bखबर\b', 'खबर'),
+            # ========== NEWS INTENT (ULTRA AGGRESSIVE) ==========
+            (r'\bsamachen\b', 'समाचार'), (r'\bsamachenbatal\b', 'समाचार बताओ'),
+            (r'\bsamacha\b', 'समाचार'), (r'\bsamata\b', 'समाचार'),
+            (r'\bsama\s*cha\b', 'समाचार'), (r'\bsama\s*ta\b', 'समाचार'),
+            (r'\barvatao\b', 'बताओ'), (r'\barbatal\b', 'बताओ'),
+            (r'\bchhar\b', 'समाचार'), (r'\bchahar\b', 'समाचार'),
             
-            # Music intent variants (गाना)
-            (r'\bganna\b', 'गाना'), (r'\bgana\b', 'गाना'), (r'\bkanna\b', 'गाना'),
-            (r'\bkana\b', 'गाना'), (r'\bganaa\b', 'गाना'),
-            (r'\bmujhe\s+ganna\b', 'गाना'), (r'\bmujee\s+kanna\b', 'गाना'),
-            (r'\bsunao\b', 'सुनाओ'), (r'\bsuna\b', 'सुनाओ'), (r'\bsunaai\b', 'सुनाओ'),
+            # ========== JOKE INTENT ==========
+            (r'\bmazar\b', 'मजाक'), (r'\bmasak\b', 'मजाक'),
+            (r'\bhansaar\b', 'हंसाओ'), (r'\bhasaar\b', 'हंसाओ'),
+            (r'\bjyod\b', 'joke'), (r'\bjoke\b', 'joke'),
             
-            # Weather intent variants (मौसम)
-            (r'\bviter\b', 'मौसम'), (r'\bwither\b', 'मौसम'), (r'\bvether\b', 'मौसम'),
-            (r'\bviter\s+batal\b', 'मौसम बताओ'),
-            (r'\bbatal\b', 'बताओ'), (r'\bbata\b', 'बताओ'),
+            # ========== DANCE INTENT ==========
+            (r'\bnaatke\b', 'नाचो'), (r'\bnaatske\b', 'नाचो'),
+            (r'\bnacho\b', 'नाचो'), (r'\bnaacho\b', 'नाचो'),
+            (r'\bdikhau\b', 'दिखाओ'), (r'\bdikhail\b', 'दिखाओ'),
+            (r'\bnaacil\b', 'नाचो'), (r'\bnaacke\b', 'नाचो'),
+            
+            # ========== MUSIC INTENT ==========
+            (r'\bganna\b', 'गाना'), (r'\bkanna\b', 'गाना'),
+            (r'\bganaa\b', 'गाना'), (r'\bsunao\b', 'सुनाओ'),
+            
+            # ========== WEATHER INTENT ==========
+            (r'\bmosam\b', 'मौसम'), (r'\bmoosam\b', 'मौसम'),
+            (r'\bviter\b', 'मौसम'), (r'\bwither\b', 'मौसम'),
+            
+            # ========== HELLO/NAME INTENT ==========
+            (r'\bbaka\s+nam\b', 'आपका नाम'), (r'\bnam\s+kya\b', 'नाम क्या'),
+            (r'\bnam\s+bata\b', 'नाम बताओ'),
         ]
         
         # Heavy-Duty Perso-Arabic (Urdu) to Devanagari character mapping
@@ -323,12 +332,11 @@ class RobustIntentClassifier:
             'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता', 'alvida'],
             'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
-            'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
-            'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
-            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna'],
-            'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
-            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
+            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी', 'mazar', 'masak', 'jyod', 'hansaar', 'hasaar', 'mazaq'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna', 'gaana'],
+            'weather': ['मौसम', 'weather', 'बारिश', 'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal', 'mosam', 'moosam'],
+            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'samachen', 'samacha', 'samata', 'arvatao', 'arbatal'],
+            'dance': ['नाच', 'dance', 'नाचो', 'डांस', 'nacho', 'naacho', 'naatke', 'naatske', 'dikhau', 'dikhail', 'naacil', 'naacke'],
         }
 
     def _load_pytorch_model(self, model_path):
@@ -356,12 +364,12 @@ class RobustIntentClassifier:
             'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता', 'alvida'],
             'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
-            'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
-            'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
-            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna'],
+            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी', 'mazar', 'masak', 'jyod', 'hansaar', 'hasaar', 'mazaq'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna', 'gaana'],
+            'weather': ['मौसम', 'weather', 'बारिश', 'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal', 'mosam', 'moosam'],
+            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'samachen', 'samacha', 'samata', 'arvatao', 'arbatal'],
+            'dance': ['नाच', 'dance', 'नाचो', 'डांस', 'nacho', 'naacho', 'naatke', 'naatske', 'dikhau', 'dikhail', 'naacil', 'naacke'],
             'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
-            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
         }
 
     def classify(self, text):
@@ -424,7 +432,7 @@ class RobustIntentClassifier:
             
         if scores:
             best_intent = max(scores, key=scores.get)
-            if scores[best_intent] >= 95: # Higher threshold for safety
+            if scores[best_intent] >= 75:  # AGGRESSIVE: Lower from 95 to 75
                 return best_intent
             
         return None
@@ -482,7 +490,7 @@ class RealtimeVoiceAssistant:
             from faster_whisper import WhisperModel
             print("\n[Layer 1] Loading Faster-Whisper (Base, Int8 quantized)...")
             self.asr_model = WhisperModel(
-                "base",                     # Model size (Base for speed)
+                "small",                    # MANDATORY for your noise environment
                 device="cpu",               # CPU inference
                 compute_type="int8",        # 8-bit quantization (Speed boost)
                 cpu_threads=2,              # FIXED: Only A76 cores (faster)
@@ -625,23 +633,38 @@ class RealtimeVoiceAssistant:
 
     def speak(self, text):
         print(f"🔊 Speaking (Natural Voice)...")
+        start_tts = time.time()
+        
         if os.path.exists(self.piper_model):
             try:
                 process = subprocess.Popen(
-                    [sys.executable, '-m', 'piper', '--model', self.piper_model, '--output-raw'],
+                    [sys.executable, '-m', 'piper', '--model', self.piper_model, 
+                     '--output-raw', '--length-scale', '1.0', '--sentence-silence', '0.2'],
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
                 )
-                audio_data, _ = process.communicate(input=text.encode('utf-8'))
+                audio_data, _ = process.communicate(input=text.encode('utf-8'), timeout=3)
+                
                 if audio_data:
                     p = pyaudio.PyAudio()
-                    stream = p.open(format=pyaudio.paInt16, channels=1, rate=self.piper_sample_rate, output=True)
+                    stream = p.open(format=pyaudio.paInt16, channels=1, 
+                                    rate=self.piper_sample_rate, output=True,
+                                    frames_per_buffer=2048)  # Larger buffer for Bluetooth
                     stream.write(audio_data)
                     stream.stop_stream()
                     stream.close()
                     p.terminate()
+                    
+                    tts_time = time.time() - start_tts
+                    print(f"   TTS latency: {tts_time:.2f}s")
                     return
-            except Exception: pass
-        subprocess.run(['espeak-ng', '-v', 'hi', text], check=False)
+            except subprocess.TimeoutExpired:
+                print("   ⚠️  Piper timeout, using fallback")
+                process.kill()
+            except Exception as e:
+                print(f"   ⚠️  Piper failed: {e}")
+        
+        # Fallback to eSpeak
+        subprocess.run(['espeak-ng', '-v', 'hi', '-s', '150', text], check=False)
 
     def run(self):
         try:
