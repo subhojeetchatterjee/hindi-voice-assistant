@@ -117,6 +117,11 @@ class AdvancedGrammarCorrector:
             (r'banthkaru', 'बंद करो'), (r'banthkaro', 'बंद करो'), (r'sukriya', 'शुक्रिया'), (r'sukria', 'शुक्रिया'),
             (r'\bsocial\b', 'समाचार'), (r'\bsociety\b', 'समाचार'), (r'\bsamachar\b', 'समाचार'), (r'\bsamacar\b', 'समाचार'),
             (r'\btopic\b', 'समाचार'), (r'\bknife\b', 'समाचार'), (r'\buse\b', 'समाचार'), (r'\blet us know\b', 'बताओ'),
+            (r'\bsama\s*chhar\b', 'समाचार'), (r'\bsamachhar\b', 'समाचार'), (r'\bsamachar\b', 'समाचार'),
+            (r'\bchhar\b', 'समाचार'), (r'\bchahar\b', 'समाचार'), (r'\bchar\b', 'समाचार'),
+            (r'\bnews\b', 'समाचार'), (r'\bnuse\b', 'समाचार'), (r'\bnuze\b', 'समाचार'),
+            (r'\bbantuja\b', 'बंद करो'), (r'\bbantuja\s*ho\b', 'बंद करो'), (r'\bbanthoja\b', 'बंद करो'),
+            (r'\bbantujao\b', 'बंद करो'), (r'\bbandoja\b', 'बंद करो'), (r'\bbanthuja\b', 'बंद करो'),
             (r'dhannewad', 'धन्यवाद्'), (r'dhanewad', 'धन्यवाद्'),
             
             # --- Transliterated Urdu Fragment Bridge ---
@@ -174,6 +179,10 @@ class AdvancedGrammarCorrector:
         
         # Pass 0: Aggressive Urdu-to-Hindi character transliteration
         text = self._transliterate_perso_arabic_to_devanagari(text)
+        
+        # Pass 0.5: Normalize spaces (fixes "Sama Chhar" → "samachhar")
+        text = re.sub(r'\s+', ' ', text)  # Multiple spaces → single space
+        text = text.strip()
         
         # Pass 1: Regex patterns (Case-insensitive for Romanized parts)
         corrected = text
@@ -300,7 +309,7 @@ class RobustIntentClassifier:
             'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
             'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play'],
             'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
-            'news': [' समाचार', ' न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट'],
+            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
         }
 
     def _load_pytorch_model(self, model_path):
@@ -334,7 +343,7 @@ class RobustIntentClassifier:
             'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
             'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play'],
             'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
-            'news': [' समाचार', ' न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट'],
+            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
         }
 
     def classify(self, text):
@@ -458,7 +467,7 @@ class RealtimeVoiceAssistant:
                 "base",                     # Model size (Base for speed)
                 device="cpu",               # CPU inference
                 compute_type="int8",        # 8-bit quantization (Speed boost)
-                cpu_threads=4,              # SBC optimization
+                cpu_threads=2,              # FIXED: Only A76 cores (faster)
                 num_workers=1               # Single worker for stability
             )
             self.use_faster_whisper = True
@@ -623,14 +632,19 @@ class RealtimeVoiceAssistant:
                     start_thinking = time.time()
                     
                     if self.use_faster_whisper:
-                        # Transcribe using faster-whisper
+                        # Transcribe using faster-whisper (SPEED-OPTIMIZED)
                         segments, info = self.asr_model.transcribe(
                             self.TEMP_WAV,
                             beam_size=1,
                             language="hi",
                             initial_prompt="Hindi Assistant. No Urdu script.",
                             vad_filter=False,
-                            condition_on_previous_text=False
+                            condition_on_previous_text=False,
+                            best_of=1,                            # Single pass only
+                            temperature=0.0,                      # Greedy decoding (no sampling)
+                            compression_ratio_threshold=2.4,      # Skip bad audio early
+                            log_prob_threshold=-1.0,              # Accept all predictions
+                            no_speech_threshold=0.6               # Better silence detection
                         )
                         raw_text = " ".join([segment.text for segment in segments]).strip()
                     else:
@@ -648,16 +662,16 @@ class RealtimeVoiceAssistant:
                     
                     response = self.generate_response(intent)
                     
-                    # 5-second thinking timeout check
+                    # Performance monitoring (warning only, no blocking)
                     total_thinking_time = time.time() - start_thinking
-                    if total_thinking_time > 5.0:
-                        print(f"⚠️  Thinking timeout ({total_thinking_time:.2f}s > 5s). Using fallback.")
-                        response = "माफ़ करें, मैं समझ नहीं पाया। कृपया फिर से बोलें।"
+                    if total_thinking_time > 3.0:
+                        print(f"⏱️  Slow processing: {total_thinking_time:.2f}s (target: <1s)")
                     
                     print(f"💬 Response: {response}")
                     self.speak(response)
                     
-                    if intent in ["stop", "goodbye"] and total_thinking_time <= 5.0:
+                    # Exit commands (no timeout condition)
+                    if intent in ["stop", "goodbye"]:
                         print("\n👋 Goodbye!")
                         break
                     print("-" * 60)
