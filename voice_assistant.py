@@ -323,7 +323,7 @@ class RobustIntentClassifier:
         # Keep fallback patterns (add them here too)
         self.fallback_patterns = {
             'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म', 'band'],
-            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'tim'],
+            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'samai', 'tim'],
             'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi'],
             'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste'],
             'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता', 'alvida'],
@@ -403,6 +403,171 @@ class RobustIntentClassifier:
         return None
 
 # ============================================================
+# LAYER 0: WAKE WORD DETECTION (OPTIONAL)
+# ============================================================
+
+class WakeWordDetector:
+    """
+    Optional wake word detection layer
+    Graceful fallback to continuous VAD if unavailable
+    """
+    
+    def __init__(self):
+        print("\n[Layer 0] Initializing Wake Word Detection...")
+        
+        self.RATE = 16000
+        self.CHUNK = 1280  # 80ms frames for openWakeWord
+        self.FORMAT = pyaudio.paInt16
+        self.CHANNELS = 1
+        
+        # Try to load wake word library
+        try:
+            from openwakeword.model import Model
+            import numpy as np
+            
+            # Check for custom model
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            custom_model = os.path.join(script_dir, "models/hey_bharat.tflite")
+            has_custom = os.path.exists(custom_model)
+            
+            # Load models
+            if has_custom:
+                self.model = Model(
+                    wakeword_models=[custom_model, 'alexa'],
+                    inference_framework='tflite'
+                )
+                print("   ✓ Custom 'Hey Bharat' model loaded")
+            else:
+                self.model = Model(
+                    wakeword_models=['hey_jarvis', 'alexa'],  # hey_jarvis ≈ Hey Bharat phonetically
+                    inference_framework='tflite'
+                )
+                print("   ✓ Using 'hey_jarvis' (similar to 'Hey Bharat')")
+            
+            # Thresholds for detection
+            self.thresholds = {
+                'hey_jarvis': 0.5,
+                'alexa': 0.6,
+                'hey_bharat': 0.4
+            }
+            
+            # User-friendly names
+            self.wake_words = {
+                'hey_jarvis': 'Hey Bharat',
+                'alexa': 'Alexa',
+                'hey_bharat': 'Hey Bharat'
+            }
+            
+            print("   ✓ Wake words: 'Hey Bharat' (hey_jarvis), 'Alexa'")
+            self.enabled = True
+            
+        except ImportError:
+            print("   ⚠️  openWakeWord not installed")
+            print("      Install: pip install openwakeword")
+            print("      Falling back to continuous VAD mode")
+            self.enabled = False
+        except Exception as e:
+            print(f"   ⚠️  Wake word init failed: {e}")
+            print("      Falling back to continuous VAD mode")
+            self.enabled = False
+    
+    def listen_for_wake_word(self, audio_interface):
+        """
+        Listen for wake word or return immediately if disabled
+        Returns: audio_interface (unchanged, for chaining)
+        """
+        if not self.enabled:
+            # Fallback: Return immediately (existing VAD behavior)
+            return audio_interface
+        
+        print("\n👂 Listening for wake word: Say 'Hey Bharat' or 'Alexa'...")
+        
+        stream = audio_interface.open(
+            format=self.FORMAT,
+            channels=self.CHANNELS,
+            rate=self.RATE,
+            input=True,
+            frames_per_buffer=self.CHUNK
+        )
+        
+        try:
+            import numpy as np
+            while True:
+                audio_data = np.frombuffer(
+                    stream.read(self.CHUNK, exception_on_overflow=False),
+                    dtype=np.int16
+                )
+                
+                # Normalize to float32
+                audio_float = audio_data.astype(np.float32) / 32768.0
+                
+                # Get prediction
+                prediction = self.model.predict(audio_float)
+                
+                # Check all wake words
+                for model_name, score in prediction.items():
+                    threshold = self.thresholds.get(model_name, 0.5)
+                    
+                    if score > threshold:
+                        wake_word = self.wake_words.get(model_name, model_name)
+                        print(f"✨ '{wake_word}' detected! (confidence: {score:.2f})")
+                        
+                        stream.stop_stream()
+                        stream.close()
+                        
+                        # Play confirmation beep
+                        self._play_beep(audio_interface)
+                        
+                        return audio_interface
+                        
+        except KeyboardInterrupt:
+            stream.stop_stream()
+            stream.close()
+            raise
+    
+    def _play_beep(self, audio_interface):
+        """Two-tone confirmation beep through speakers"""
+        try:
+            import numpy as np
+            
+            # Tone 1: 800Hz, 80ms (lower pitch)
+            t1 = 0.08
+            samples1 = np.sin(2 * np.pi * 800 * np.linspace(0, t1, int(self.RATE * t1)))
+            
+            # Tone 2: 1200Hz, 120ms (higher pitch)
+            t2 = 0.12
+            samples2 = np.sin(2 * np.pi * 1200 * np.linspace(0, t2, int(self.RATE * t2)))
+            
+            # Small gap between tones
+            gap = np.zeros(int(self.RATE * 0.02))
+            
+            # Combine: beep-pause-beep
+            combined = np.concatenate([samples1, gap, samples2])
+            
+            # Fade in/out to avoid clicks
+            fade_len = int(self.RATE * 0.01)
+            combined[:fade_len] *= np.linspace(0, 1, fade_len)
+            combined[-fade_len:] *= np.linspace(1, 0, fade_len)
+            
+            # Volume control (40% to not be too loud)
+            combined = (combined * 0.4 * 32767).astype(np.int16)
+            
+            # Play through speakers
+            stream = audio_interface.open(
+                format=self.FORMAT,
+                channels=self.CHANNELS,
+                rate=self.RATE,
+                output=True
+            )
+            stream.write(combined.tobytes())
+            stream.stop_stream()
+            stream.close()
+            
+        except Exception as e:
+            # Beep not critical, continue without it
+            pass
+
+# ============================================================
 # MAIN ASSISTANT CLASS
 # ============================================================
 
@@ -433,7 +598,7 @@ class RealtimeVoiceAssistant:
         
         print("=" * 60)
         print("Initializing Real-time Hindi Voice Assistant")
-        print("High-Speed Optimization (Pi 5)")
+        print("High-Speed Optimization")
         print("=" * 60)
         
         self.RATE = 16000
@@ -448,6 +613,9 @@ class RealtimeVoiceAssistant:
         
         self.audio = pyaudio.PyAudio()
         
+        # Layer 0: Wake Word Detection (NEW - OPTIONAL)
+        self.wake_word_detector = WakeWordDetector()
+        
         # Layer 1: ASR Loading (Faster-Whisper with Fallback)
         try:
             from faster_whisper import WhisperModel
@@ -460,7 +628,7 @@ class RealtimeVoiceAssistant:
                 num_workers=1               # Single worker for stability
             )
             self.use_faster_whisper = True
-            print("✓ Faster-Whisper loaded (optimized for Pi 5)")
+            print("✓ Faster-Whisper loaded (optimized for SBC)")
         except Exception as e:
             print(f"⚠️  Faster-Whisper failed: {e}")
             print("   Falling back to standard Whisper (will be slower)")
@@ -615,8 +783,23 @@ class RealtimeVoiceAssistant:
         subprocess.run(['espeak-ng', '-v', 'hi', text], check=False)
 
     def run(self):
+        print("\n" + "="*60)
+        print("🎙️  REAL-TIME HINDI VOICE ASSISTANT READY")
+        print("="*60)
+        
+        if self.wake_word_detector.enabled:
+            print("👂 Say 'Hey Bharat' or 'Alexa' to activate")
+        else:
+            print("🎤 Continuous listening mode (VAD)")
+        
+        print("="*60)
+        
         try:
             while True:
+                # NEW: Wait for wake word (or skip if disabled)
+                self.wake_word_detector.listen_for_wake_word(self.audio)
+                
+                # EXISTING: Record with VAD (unchanged)
                 if self.record_with_vad():
                     start_thinking = time.time()
                     
