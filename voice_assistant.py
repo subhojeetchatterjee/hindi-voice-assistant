@@ -647,8 +647,6 @@ class RealtimeVoiceAssistant:
         try:
             while True:
                 if self.record_with_vad():
-                    start_thinking = time.time()
-                    
                     if self.use_faster_whisper:
                         # Transcribe using faster-whisper (SPEED-OPTIMIZED)
                         segments, info = self.asr_model.transcribe(
@@ -670,20 +668,14 @@ class RealtimeVoiceAssistant:
                         result = self.asr_standard.transcribe(self.TEMP_WAV, language="hi", fp16=False)
                         raw_text = result['text'].strip()
                         
-                    print(f"📝 Raw transcription: '{raw_text}' ({time.time()-start_thinking:.2f}s)")
+                    print(f"📝 Raw transcription: '{raw_text}'")
                     
                     corrected = self.corrector.correct(raw_text)
                     
-                    intent_start = time.time()
                     intent, conf = self.intent_classifier.classify(corrected)
-                    print(f"🎯 Intent: {intent} (confidence: {conf:.1%}, {time.time()-intent_start:.3f}s)")
+                    print(f"🎯 Intent: {intent} (confidence: {conf:.1%})")
                     
                     response = self.generate_response(intent)
-                    
-                    # Performance monitoring (warning only, no blocking)
-                    total_thinking_time = time.time() - start_thinking
-                    if total_thinking_time > 3.0:
-                        print(f"⏱️  Slow processing: {total_thinking_time:.2f}s (target: <1s)")
                     
                     print(f"💬 Response: {response}")
                     self.speak(response)
