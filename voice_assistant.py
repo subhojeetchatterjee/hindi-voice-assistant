@@ -488,12 +488,12 @@ class RealtimeVoiceAssistant:
         # Layer 1: ASR Loading (Faster-Whisper with Fallback)
         try:
             from faster_whisper import WhisperModel
-            print("\n[Layer 1] Loading Faster-Whisper (Base, Int8 quantized)...")
+            print("\n[Layer 1] Loading Faster-Whisper (small, Int8 quantized)...")
             self.asr_model = WhisperModel(
-                "small",                    # MANDATORY for your noise environment
+                "small",                    # MANDATORY for noisy environments
                 device="cpu",               # CPU inference
                 compute_type="int8",        # 8-bit quantization (Speed boost)
-                cpu_threads=2,              # FIXED: Only A76 cores (faster)
+                cpu_threads=2,              # Only A76 cores (faster)
                 num_workers=1               # Single worker for stability
             )
             self.use_faster_whisper = True
