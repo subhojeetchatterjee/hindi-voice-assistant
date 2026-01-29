@@ -567,7 +567,7 @@ class RealtimeVoiceAssistant:
             month_hindi = self.HINDI_MONTHS.get(now.strftime('%B'), now.strftime('%B'))
             return f"आज की तारीख है {now.day} {month_hindi} {now.year}"
         elif intent == "hello":
-            return "नमस्ते! मैं आपकी कैसे मदद कर सकता हूं?"
+            return "नमस्ते! मेरा नाम भारत AI है, मैं आपकी कैसे मदद कर सकता हूं?"
         elif intent == "goodbye":
             return "अलविदा! फिर मिलेंगे।"
         elif intent == "thank_you":
