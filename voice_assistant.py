@@ -140,6 +140,17 @@ class AdvancedGrammarCorrector:
             (r'\bअलरम\b', 'अलार्म'), (r'\bरमइडर\b', 'रिमाइंडर'),
             (r'\bसमचर\b', 'समाचार'), (r'\bनयज़\b', 'न्यूज़'),
             (r'\bखबर\b', 'खबर'),
+            
+            # Music intent variants (गाना)
+            (r'\bganna\b', 'गाना'), (r'\bgana\b', 'गाना'), (r'\bkanna\b', 'गाना'),
+            (r'\bkana\b', 'गाना'), (r'\bganaa\b', 'गाना'),
+            (r'\bmujhe\s+ganna\b', 'गाना'), (r'\bmujee\s+kanna\b', 'गाना'),
+            (r'\bsunao\b', 'सुनाओ'), (r'\bsuna\b', 'सुनाओ'), (r'\bsunaai\b', 'सुनाओ'),
+            
+            # Weather intent variants (मौसम)
+            (r'\bviter\b', 'मौसम'), (r'\bwither\b', 'मौसम'), (r'\bvether\b', 'मौसम'),
+            (r'\bviter\s+batal\b', 'मौसम बताओ'),
+            (r'\bbatal\b', 'बताओ'), (r'\bbata\b', 'बताओ'),
         ]
         
         # Heavy-Duty Perso-Arabic (Urdu) to Devanagari character mapping
@@ -183,6 +194,12 @@ class AdvancedGrammarCorrector:
         # Pass 0.5: Normalize spaces (fixes "Sama Chhar" → "samachhar")
         text = re.sub(r'\s+', ' ', text)  # Multiple spaces → single space
         text = text.strip()
+        
+        # Pass 0.75: Noise cleanup
+        noise_words = r'\b(umm|uh|hmm|aah|uhh|like|you know|bhujhey|mujee|aa|eh)\b'
+        text = re.sub(noise_words, '', text, flags=re.IGNORECASE)
+        text = re.sub(r'([a-zA-Z])\1{2,}', r'\1\1', text)  # "Gannna" → "Ganna"
+        text = re.sub(r'\s+', ' ', text).strip()
         
         # Pass 1: Regex patterns (Case-insensitive for Romanized parts)
         corrected = text
@@ -307,9 +324,9 @@ class RobustIntentClassifier:
             'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
             'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
-            'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान'],
+            'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
             'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna'],
             'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
             'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
         }
@@ -340,9 +357,9 @@ class RobustIntentClassifier:
             'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
             'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
-            'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान'],
+            'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
             'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna'],
             'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
             'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
         }
@@ -455,7 +472,7 @@ class RealtimeVoiceAssistant:
         self.vad = webrtcvad.Vad(2) 
         self.silence_threshold = 1.0 
         self.min_speech_duration = 0.5 
-        self.max_recording_duration = 10.0
+        self.max_recording_duration = 7.0  # Shorter = less noise accumulation
         
         self.audio = pyaudio.PyAudio()
         
