@@ -36,25 +36,40 @@ class AdvancedGrammarCorrector:
     def __init__(self):
         # Core vocabulary by intent category
         self.core_vocabulary = {
-            'stop': ['बंद', 'बन्द', 'स्टॉप', 'स्टप', 'stop', 'रुको', 'रूको', 'रुक'],
-            'command_stop': ['करो', 'करदो', 'कर', 'कर do', 'हो', 'हो जाओ'],
-            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'wakt', 'waqt'],
-            'time_query': ['क्या', 'कितने', 'कितना', 'बताओ', 'बतओ', 'what', 'कैसा'],
-            'date': ['तारीख', 'तिथि', 'डेट', 'date', 'दिन', 'आज'],
-            'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'naam', 'name', 'नाम'],
-            'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता'],
-            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार'],
-            'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत'],
-            # Dance intent
-            'dance': ['नाच', 'नाचो', 'डांस', 'नाचना', 'नाचकर', 'natch', 'nath', 'naach'],
-            'weather': ['मौसम', 'weather', 'बारिश', 'ठंड', 'गर्मी', 'तापमान'],
-            'joke': ['जोक', 'joke', 'मजाक', 'hansaao', 'mazaq', 'चुटकुला'],
-            # Music intent
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play'],
-            # Alarm intent
-            'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
-            # News intent
-            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'social', 'society', 'samacar', 'topic', 'society', 'knife'],
+            'stop': ['बंद', 'बन्द', 'स्टॉप', 'stop', 'रुको', 'band', 'bandh', 'bantuja'],
+            'command_stop': ['करो', 'करदो', 'कर', 'karo', 'kar'],
+            
+            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'samay', 'samai', 'tym', 'samaya'],
+            'time_query': ['क्या', 'कितने', 'what', 'kya', 'kitne', 'बताओ', 'batao', 'batal'],
+            
+            'date': ['तारीख', 'तिथि', 'डेट', 'date', 'दिन', 'आज', 'tarikh', 'aaj', 'wedding'],
+            
+            'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'hello', 'hi', 'namaste', 'naam', 'name', 'नाम', 'baka'],
+            
+            'goodbye': ['अलविदा', 'बाय', 'bye', 'alvida'],
+            
+            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'shukriya'],
+            
+            'help': ['मदद', 'हेल्प', 'help', 'madad'],
+            
+            'dance': ['नाच', 'नाचो', 'डांस', 'dance', 'nacho', 'naacho', 'naach',
+                      'naatke', 'naatske', 'naacil', 'naacke', 'mujem', 
+                      'dikhau', 'dikhail', 'dikha', 'दिखाओ'],
+            
+            'weather': ['मौसम', 'weather', 'बारिश', 'ठंड', 'गर्मी', 
+                        'mosam', 'moosam', 'viter', 'wither', 'batal', 'batao'],
+            
+            'joke': ['जोक', 'joke', 'मजाक', 'mazaq', 'mazar', 'masak',
+                     'jyod', 'hansaar', 'hasaar', 'funny', 'हँसाओ'],
+            
+            'music': ['गाना', 'संगीत', 'music', 'song', 'ganna', 'kanna',
+                      'gaana', 'sunao', 'suna', 'बजाओ'],
+            
+            'alarm': ['अलार्म', 'alarm', 'alaam'],
+            
+            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'samachar',
+                     'samachen', 'samacha', 'samata', 'chhar',
+                     'arvatao', 'arbatal', 'बताओ'],
         }
         
         # Critical error patterns (regex)
@@ -210,16 +225,45 @@ class AdvancedGrammarCorrector:
         text = re.sub(r'([a-zA-Z])\1{2,}', r'\1\1', text)  # "Gannna" → "Ganna"
         text = re.sub(r'\s+', ' ', text).strip()
         
+        # Pass 0.8: Multi-word phrase detection (NEW - CRITICAL!)
+        multi_word_patterns = {
+            r'\b(samachen|samacha|samata)\s*(batal|arvatao|arbatal)\b': 'समाचार बताओ',
+            r'\b(naatke|naatske|nacho|mujem)\s*(dikhau|dikhail|dikha)\b': 'नाचो दिखाओ',
+            r'\b(mazar|masak|mazaq)\s*(karu|sunao|suna)\b': 'मजाक सुनाओ',
+            r'\b(mosam|moosam|viter)\s*(batal|batao)\b': 'मौसम बताओ',
+            r'\b(ganna|kanna)\s*sunao\b': 'गाना सुनाओ',
+            r'\b(baka|aapka)\s*nam\s*(kya|bata)\b': 'आपका नाम',
+        }
+        
+        for pattern, replacement in multi_word_patterns.items():
+            text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+        
         # Pass 1: Regex patterns (Case-insensitive for Romanized parts)
         corrected = text
         for pattern, replacement in self.error_patterns:
             corrected = re.sub(pattern, replacement, corrected, flags=re.IGNORECASE)
         
-        # Pass 2: Word-level fuzzy correction
+        # Pass 2: Word-level phonetic correction (ENHANCED)
         words = corrected.split()
         corrected_words = []
+        
         for word in words:
+            # Skip if already Devanagari
+            if any('\u0900' <= char <= '\u097F' for char in word):
+                corrected_words.append(word)
+                continue
+            
+            # First try existing fuzzy correction
             corrected_word = self._correct_word(word)
+            
+            # If unchanged, try phonetic matching against all vocabularies
+            if corrected_word == word and len(word) >= 3:
+                for category, vocab_list in self.core_vocabulary.items():
+                    matched = self._find_closest_match(word, vocab_list, threshold=70)
+                    if matched != word:
+                        corrected_word = matched
+                        break
+            
             corrected_words.append(corrected_word)
         
         final_text = ' '.join(corrected_words)
@@ -248,9 +292,40 @@ class AdvancedGrammarCorrector:
                     best_score = similarity
                     best_match = vocab_word
         
-        if best_score >= self.fuzzy_threshold:
             return best_match
             
+        return word
+
+    def _phonetic_similarity(self, word1, word2):
+        """Calculate phonetic similarity (0-100)"""
+        if not self.use_fuzzy:
+            return 0
+        
+        w1 = word1.lower()
+        w2 = word2.lower()
+        
+        if w1 == w2:
+            return 100
+        
+        return self.fuzz.ratio(w1, w2)
+    
+    
+    def _find_closest_match(self, word, vocab_list, threshold=70):
+        """Find closest phonetic match from vocabulary"""
+        if not self.use_fuzzy or len(word) < 3:
+            return word
+        
+        best_match = word
+        best_score = 0
+        
+        for vocab_word in vocab_list:
+            score = self._phonetic_similarity(word, vocab_word)
+            if score > best_score:
+                best_score = score
+                best_match = vocab_word
+        
+        if best_score >= threshold:
+            return best_match
         return word
 
 # ============================================================
@@ -488,9 +563,9 @@ class RealtimeVoiceAssistant:
         # Layer 1: ASR Loading (Faster-Whisper with Fallback)
         try:
             from faster_whisper import WhisperModel
-            print("\n[Layer 1] Loading Faster-Whisper (small, Int8 quantized)...")
+            print("\n[Layer 1] Loading Faster-Whisper (Base, Int8 quantized)...")
             self.asr_model = WhisperModel(
-                "small",                    # MANDATORY for noisy environments
+                "base",                    
                 device="cpu",               # CPU inference
                 compute_type="int8",        # 8-bit quantization (Speed boost)
                 cpu_threads=2,              # Only A76 cores (faster)
