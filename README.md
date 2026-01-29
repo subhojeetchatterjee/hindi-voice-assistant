@@ -3,7 +3,6 @@
 This is a privacy-preserving, 100% offline Hindi voice assistant designed for the Bharat AI-SoC Challenge, optimized for the **Radxa Cubie A7A** (6GB RAM, Cortex-A76 cores).
 
 ## 🚀 Key Features
-- **Layer 0: Wake Word Detection**: Supports "Hey Bharat" and "Alexa" voice triggers with audio feedback.
 - **ONNX INT8 Integration**: Highly optimized intent classification for low latency (~10ms).
 - **Core Affinity Scaling**: Processes are automatically pinned to Cortex-A76 performance cores.
 - **Hardware-Aware Tuning**: Automated CPU governor and memory management optimization.

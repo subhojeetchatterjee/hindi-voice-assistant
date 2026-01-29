@@ -39,8 +39,7 @@ pip install --upgrade pip
 # webrtcvad is added for Phase 3 real-time voice activity detection
 # faster-whisper is added for Phase 5 high-speed optimization (Pi 5)
 # optimum/onnxruntime is added for Phase 14 Radxa A76 optimization
-# openwakeword is added for Layer 0 voice trigger
-pip install openai-whisper faster-whisper pyaudio numpy piper-tts rapidfuzz torch transformers webrtcvad optimum[onnxruntime] psutil huggingface-hub openwakeword
+pip install openai-whisper faster-whisper pyaudio numpy piper-tts rapidfuzz torch transformers webrtcvad optimum[onnxruntime] psutil huggingface-hub
 
 # 4. Pre-download Whisper base model
 echo "📥 Pre-downloading Whisper 'base' model..."
