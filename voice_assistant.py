@@ -263,6 +263,9 @@ class RobustIntentClassifier:
 
     def _load_onnx_model(self, model_path):
         """Load ONNX-optimized model"""
+        import os
+        import json
+        import torch
         from optimum.onnxruntime import ORTModelForSequenceClassification
         
         # Load label map
@@ -287,11 +290,10 @@ class RobustIntentClassifier:
             p = psutil.Process()
             p.cpu_affinity([0, 1])  # Cores 0-1 are Cortex-A76
             print("   ✓ Process pinned to Cortex-A76 cores")
-        except Exception as e:
+        except Exception:
             pass  # Not critical
         
         # Set thread limits for 6GB RAM
-        import os
         os.environ['OMP_NUM_THREADS'] = '2'
         torch.set_num_threads(2)
         
@@ -319,8 +321,7 @@ class RobustIntentClassifier:
         
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         self.model = AutoModelForSequenceClassification.from_pretrained(
-            model_path,
-            torch_dtype=torch.float32
+            model_path
         )
         self.model.eval()
         self.device = torch.device("cpu")
