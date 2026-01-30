@@ -36,21 +36,21 @@ class AdvancedGrammarCorrector:
     def __init__(self):
         # Core vocabulary by intent category
         self.core_vocabulary = {
-            'stop': ['बंद', 'बन्द', 'स्टॉप', 'स्टप', 'stop', 'रुको', 'रूको', 'रुक', 'बन्ते', 'बंद्ते', 'बन्तोजा'],
+            'stop': ['बंद', 'बन्द', 'स्टॉप', 'स्टप', 'stop', 'रुको', 'रूको', 'रुक', 'बन्त', 'बन्ते', 'बंद्ते', 'बन्तोजा'],
             'command_stop': ['करो', 'करदो', 'कर', 'कर do', 'हो', 'हो जाओ'],
             'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'wakt', 'waqt'],
             'time_query': ['क्या', 'कितने', 'कितना', 'बताओ', 'बतओ', 'what', 'कैसा'],
             'date': ['तारीख', 'तिथि', 'डेट', 'date', 'दिन', 'आज'],
             'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'naam', 'name', 'नाम'],
             'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता'],
-            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'जुप्रिया', 'सुक्रिया', 'सुप्रिया'],
+            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'जुप्रिया', 'सुक्रिया', 'सुप्रिया', 'सुक्या', 'धनिवाद'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत'],
             # Dance intent
             'dance': ['नाच', 'नाचो', 'डांस', 'नाचना', 'नाचकर', 'natch', 'nath', 'naach'],
             'weather': ['मौसम', 'weather', 'बारिश', 'ठंड', 'गर्मी', 'तापमान'],
             'joke': ['जोक', 'joke', 'मजाक', 'hansaao', 'mazaq', 'चुटकुला', 'जुक', 'मचाक', 'मजक'],
             # Music intent
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'काना', 'कना', 'सुला'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'काना', 'कना', 'सुला', 'बाना'],
             # Alarm intent
             'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
             # News intent
@@ -61,6 +61,7 @@ class AdvancedGrammarCorrector:
         self.error_patterns = [
             # STOP INTENT - Critical phonetic fixes
             (r'\bबन\b', 'बंद'),
+            (r'\bबन्त\b', 'बंद'),
             (r'\bबन्ते\b', 'बंद'),
             (r'\bबंद्ते\b', 'बंद'),
             (r'\bबन्तोजा\b', 'बंद करो'),
@@ -98,6 +99,7 @@ class AdvancedGrammarCorrector:
             # THANK_YOU INTENT - Critical phonetic fixes
             (r'\bshukriya\b', 'शुक्रिया'), (r'\bshukriyaa\b', 'शुक्रिया'), (r'\bsukriya\b', 'शुक्रिया'), (r'\bsukria\b', 'शुक्रिया'),
             (r'\bजुप्रिया\b', 'शुक्रिया'), (r'\bसुक्रिया\b', 'शुक्रिया'), (r'\bसुप्रिया\b', 'शुक्रिया'),
+            (r'\bसुक्या\b', 'शुक्रिया'), (r'\bदहनिवाद\b', 'धन्यवाद'), (r'\bधनिवाद\b', 'धन्यवाद'),
             (r'\baaj\b', 'आज'), (r'\baach\b', 'आज'), (r'\baj\b', 'आज'), (r'\bad\b', 'आज'),
             (r'\bmadad\b', 'मदद'), (r'\bmodot\b', 'मदद'), (r'\bmodat\b', 'मदद'),
             (r'\balarm\b', 'अलार्म'), (r'\balum\b', 'अलार्म'), (r'\balurm\b', 'अलार्म'), (r'\balbum\b', 'अलार्म'), (r'\alaam\b', 'अलार्म'),
@@ -106,7 +108,7 @@ class AdvancedGrammarCorrector:
             (r'\bjoke\b', 'जोक'), (r'\bjok\b', 'जोक'), (r'\bजुक\b', 'जोक'),
             (r'\bmazaq\b', 'मजाक'), (r'\bmazak\b', 'मजाक'), (r'\bमचाक\b', 'मजाक'), (r'\bमजक\b', 'मजाक'),
             # MUSIC INTENT - Critical phonetic fixes
-            (r'\bgana\b', 'गाना'), (r'\bgaana\b', 'गाना'), (r'\bsong\b', 'गाना'), (r'\bकाना\b', 'गाना'), (r'\bकना\b', 'गाना'), (r'\bकानो\b', 'गाना'),
+            (r'\bgana\b', 'गाना'), (r'\bgaana\b', 'गाना'), (r'\bsong\b', 'गाना'), (r'\bकाना\b', 'गाना'), (r'\bकना\b', 'गाना'), (r'\bकानो\b', 'गाना'), (r'\bबाना\b', 'गाना'),
             (r'\bnaaj\b', 'नाच'), (r'\bnaach\b', 'नाच'), (r'\bdance\b', 'डांस'), (r'\bnaacu\b', 'नाचो'), (r'\bnaachu\b', 'नाचो'), (r'\bnachiye\b', 'नाचो'),
             (r'\bnathke\b', 'नाचके'), (r'\bnatchke\b', 'नाचके'), (r'\bnath\b', 'नाच'), (r'\bnatch\b', 'नाच'),
             (r'\balvida\b', 'अलविदा'), (r'\bbye\b', 'bye'),
@@ -654,7 +656,7 @@ class RealtimeVoiceAssistant:
                     p = pyaudio.PyAudio()
                     stream = p.open(format=pyaudio.paInt16, channels=1, 
                                     rate=self.piper_sample_rate, output=True,
-                                    frames_per_buffer=2048)
+                                    frames_per_buffer=512)
                     stream.write(audio_data)
                     stream.stop_stream()
                     stream.close()
@@ -683,7 +685,7 @@ class RealtimeVoiceAssistant:
                             beam_size=3,
                             language="hi",
                             task="transcribe",
-                            initial_prompt="यह हिंदी वॉयस असिस्टेंट है। आज कौन सा दिन है। समय क्या है। नमस्ते। नाचो। Transcribe in Hindi/Hinglish only.",
+                            initial_prompt="यह हिंदी वॉयस असिस्टेंट है। बंद करो। बंद हो जाओ। समय क्या है। आज कौन सा दिन है। गाना सुनाओ। मजाक सुनाओ। मौसम बताओ। नमस्ते। धन्यवाद। शुक्रिया।",
                             vad_filter=True,
                             condition_on_previous_text=False,
                             best_of=1,
@@ -702,7 +704,7 @@ class RealtimeVoiceAssistant:
                                 language="hi",
                                 task="transcribe",
                                 beam_size=5,
-                                initial_prompt="हिंदी हिंदी। आज कौन सा दिन है। समय क्या है। नाचो। मजाक सुनाओ।"
+                                initial_prompt="हिंदी हिंदी। बंद करो। बंद हो जाओ। समय क्या है। गाना सुनाओ। मजाक सुनाओ।"
                             )
 
                         raw_text = " ".join([segment.text for segment in segments]).strip()
