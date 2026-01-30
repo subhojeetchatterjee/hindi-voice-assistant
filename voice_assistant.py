@@ -634,7 +634,7 @@ class RealtimeVoiceAssistant:
                      '--output-raw', '--length-scale', '1.0', '--sentence-silence', '0.2'],
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
                 )
-                audio_data, _ = process.communicate(input=text.encode('utf-8'), timeout=3)
+                audio_data, _ = process.communicate(input=text.encode('utf-8'), timeout=10)
                 
                 if audio_data:
                     p = pyaudio.PyAudio()
@@ -666,17 +666,31 @@ class RealtimeVoiceAssistant:
                         # Transcribe using faster-whisper (SPEED-OPTIMIZED)
                         segments, info = self.asr_model.transcribe(
                             self.TEMP_WAV,
-                            beam_size=1,
+                            beam_size=3,
                             language="hi",
-                            initial_prompt="Hindi Assistant. No Urdu script.",
-                            vad_filter=False,
+                            task="transcribe",
+                            initial_prompt="यह हिंदी वॉयस असिस्टेंट है। आज कौन सा दिन है। समय क्या है। नमस्ते। नाचो। Transcribe in Hindi/Hinglish only.",
+                            vad_filter=True,
                             condition_on_previous_text=False,
-                            best_of=1,                            # Single pass only
-                            temperature=0.0,                      # Greedy decoding (no sampling)
-                            compression_ratio_threshold=2.4,      # Skip bad audio early
-                            log_prob_threshold=-1.0,              # Accept all predictions
-                            no_speech_threshold=0.6               # Better silence detection
+                            best_of=1,
+                            temperature=0.0,
+                            compression_ratio_threshold=2.4,
+                            log_prob_threshold=-1.0,
+                            no_speech_threshold=0.6
                         )
+                        
+                        # Check if Hindi was detected
+                        if info.language != "hi":
+                            print(f"⚠️  Wrong language: {info.language} (prob: {info.language_probability:.0%})")
+                            print(f"   Forcing Hindi retry...")
+                            segments, info = self.asr_model.transcribe(
+                                self.TEMP_WAV,
+                                language="hi",
+                                task="transcribe",
+                                beam_size=5,
+                                initial_prompt="हिंदी हिंदी। आज कौन सा दिन है। समय क्या है। नाचो। मजाक सुनाओ।"
+                            )
+
                         raw_text = " ".join([segment.text for segment in segments]).strip()
                     else:
                         # Fallback to standard whisper
