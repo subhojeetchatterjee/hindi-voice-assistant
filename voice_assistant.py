@@ -635,15 +635,17 @@ class RealtimeVoiceAssistant:
                 )
                 audio_data, stderr_data = process.communicate(input=text.encode('utf-8'), timeout=10)
                 
-                # Check for errors
-                if process.returncode != 0 and stderr_data:
-                    print(f"   ⚠️ Piper error: {stderr_data.decode()[:150]}")
+                # Show Piper errors if any
+                if process.returncode != 0:
+                    error_msg = stderr_data.decode()[:200] if stderr_data else "Unknown error"
+                    print(f"   ⚠️ Piper failed: {error_msg}")
+                    raise Exception("Piper TTS failed")
                 
                 if audio_data:
                     p = pyaudio.PyAudio()
                     stream = p.open(format=pyaudio.paInt16, channels=1, 
                                     rate=self.piper_sample_rate, output=True,
-                                    frames_per_buffer=2048)  # Larger buffer for Bluetooth
+                                    frames_per_buffer=1024)  # Smaller = faster response
                     stream.write(audio_data)
                     stream.stop_stream()
                     stream.close()
