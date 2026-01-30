@@ -36,40 +36,25 @@ class AdvancedGrammarCorrector:
     def __init__(self):
         # Core vocabulary by intent category
         self.core_vocabulary = {
-            'stop': ['बंद', 'बन्द', 'स्टॉप', 'stop', 'रुको', 'band', 'bandh', 'bantuja'],
-            'command_stop': ['करो', 'करदो', 'कर', 'karo', 'kar'],
-            
-            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'samay', 'samai', 'tym', 'samaya'],
-            'time_query': ['क्या', 'कितने', 'what', 'kya', 'kitne', 'बताओ', 'batao', 'batal'],
-            
-            'date': ['तारीख', 'तिथि', 'डेट', 'date', 'दिन', 'आज', 'tarikh', 'aaj', 'wedding'],
-            
-            'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'hello', 'hi', 'namaste', 'naam', 'name', 'नाम', 'baka'],
-            
-            'goodbye': ['अलविदा', 'बाय', 'bye', 'alvida'],
-            
-            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'shukriya'],
-            
-            'help': ['मदद', 'हेल्प', 'help', 'madad'],
-            
-            'dance': ['नाच', 'नाचो', 'डांस', 'dance', 'nacho', 'naacho', 'naach',
-                      'naatke', 'naatske', 'naacil', 'naacke', 'mujem', 
-                      'dikhau', 'dikhail', 'dikha', 'दिखाओ'],
-            
-            'weather': ['मौसम', 'weather', 'बारिश', 'ठंड', 'गर्मी', 
-                        'mosam', 'moosam', 'viter', 'wither', 'batal', 'batao'],
-            
-            'joke': ['जोक', 'joke', 'मजाक', 'mazaq', 'mazar', 'masak',
-                     'jyod', 'hansaar', 'hasaar', 'funny', 'हँसाओ'],
-            
-            'music': ['गाना', 'संगीत', 'music', 'song', 'ganna', 'kanna',
-                      'gaana', 'sunao', 'suna', 'बजाओ'],
-            
-            'alarm': ['अलार्म', 'alarm', 'alaam'],
-            
-            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'samachar',
-                     'samachen', 'samacha', 'samata', 'chhar',
-                     'arvatao', 'arbatal', 'बताओ'],
+            'stop': ['बंद', 'बन्द', 'स्टॉप', 'स्टप', 'stop', 'रुको', 'रूको', 'रुक'],
+            'command_stop': ['करो', 'करदो', 'कर', 'कर do', 'हो', 'हो जाओ'],
+            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'wakt', 'waqt'],
+            'time_query': ['क्या', 'कितने', 'कितना', 'बताओ', 'बतओ', 'what', 'कैसा'],
+            'date': ['तारीख', 'तिथि', 'डेट', 'date', 'दिन', 'आज'],
+            'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'naam', 'name', 'नाम'],
+            'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता'],
+            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार'],
+            'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत'],
+            # Dance intent
+            'dance': ['नाच', 'नाचो', 'डांस', 'नाचना', 'नाचकर', 'natch', 'nath', 'naach'],
+            'weather': ['मौसम', 'weather', 'बारिश', 'ठंड', 'गर्मी', 'तापमान'],
+            'joke': ['जोक', 'joke', 'मजाक', 'hansaao', 'mazaq', 'चुटकुला'],
+            # Music intent
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play'],
+            # Alarm intent
+            'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
+            # News intent
+            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'social', 'society', 'samacar', 'topic', 'society', 'knife'],
         }
         
         # Critical error patterns (regex)
@@ -146,35 +131,26 @@ class AdvancedGrammarCorrector:
             (r"\u0622\u0686", "आज"), (r"\u0633\u0645", "सम"), (r"\u0686\u0627\u0631", "चार"), (r"\u062c\u0648\u06a9", "जोक"), (r"\u0645\u0630\u0627\u06a9", "मजाक"),
             (r"\u06a9\u06cc\u0627", "क्या"), (r"\u06c1\u06d2", "है"), (r"\u0628\u062a\u0620", "बताओ"),
             
-            # ========== NEWS INTENT (ULTRA AGGRESSIVE) ==========
-            (r'\bsamachen\b', 'समाचार'), (r'\bsamachenbatal\b', 'समाचार बताओ'),
-            (r'\bsamacha\b', 'समाचार'), (r'\bsamata\b', 'समाचार'),
-            (r'\bsama\s*cha\b', 'समाचार'), (r'\bsama\s*ta\b', 'समाचार'),
-            (r'\barvatao\b', 'बताओ'), (r'\barbatal\b', 'बताओ'),
-            (r'\bchhar\b', 'समाचार'), (r'\bchahar\b', 'समाचार'),
+            # --- Phonetic Devanagari Corrections ---
+            (r'\bमसम\b', 'मौसम'), (r'\bमोसम\b', 'मौसम'),
+            (r'\bबरश\b', 'बारिश'), (r'\bठड\b', 'ठंड'),
+            (r'\bगरम\b', 'गर्मी'), (r'\bजक\b', 'जोक'),
+            (r'\बमजक\b', 'मजाक'), (r'\bचटकल\b', 'चुटकुला'),
+            (r'\bगन\b', 'गाना'), (r'\bसगत\b', 'संगीत'),
+            (r'\bअलरम\b', 'अलार्म'), (r'\bरमइडर\b', 'रिमाइंडर'),
+            (r'\bसमचर\b', 'समाचार'), (r'\bनयज़\b', 'न्यूज़'),
+            (r'\bखबर\b', 'खबर'),
             
-            # ========== JOKE INTENT ==========
-            (r'\bmazar\b', 'मजाक'), (r'\bmasak\b', 'मजाक'),
-            (r'\bhansaar\b', 'हंसाओ'), (r'\bhasaar\b', 'हंसाओ'),
-            (r'\bjyod\b', 'joke'), (r'\bjoke\b', 'joke'),
+            # Music intent variants (गाना)
+            (r'\bganna\b', 'गाना'), (r'\bgana\b', 'गाना'), (r'\bkanna\b', 'गाना'),
+            (r'\bkana\b', 'गाना'), (r'\bganaa\b', 'गाना'),
+            (r'\bmujhe\s+ganna\b', 'गाना'), (r'\bmujee\s+kanna\b', 'गाना'),
+            (r'\bsunao\b', 'सुनाओ'), (r'\bsuna\b', 'सुनाओ'), (r'\bsunaai\b', 'सुनाओ'),
             
-            # ========== DANCE INTENT ==========
-            (r'\bnaatke\b', 'नाचो'), (r'\bnaatske\b', 'नाचो'),
-            (r'\bnacho\b', 'नाचो'), (r'\bnaacho\b', 'नाचो'),
-            (r'\bdikhau\b', 'दिखाओ'), (r'\bdikhail\b', 'दिखाओ'),
-            (r'\bnaacil\b', 'नाचो'), (r'\bnaacke\b', 'नाचो'),
-            
-            # ========== MUSIC INTENT ==========
-            (r'\bganna\b', 'गाना'), (r'\bkanna\b', 'गाना'),
-            (r'\bganaa\b', 'गाना'), (r'\bsunao\b', 'सुनाओ'),
-            
-            # ========== WEATHER INTENT ==========
-            (r'\bmosam\b', 'मौसम'), (r'\bmoosam\b', 'मौसम'),
-            (r'\bviter\b', 'मौसम'), (r'\bwither\b', 'मौसम'),
-            
-            # ========== HELLO/NAME INTENT ==========
-            (r'\bbaka\s+nam\b', 'आपका नाम'), (r'\bnam\s+kya\b', 'नाम क्या'),
-            (r'\bnam\s+bata\b', 'नाम बताओ'),
+            # Weather intent variants (मौसम)
+            (r'\bviter\b', 'मौसम'), (r'\bwither\b', 'मौसम'), (r'\bvether\b', 'मौसम'),
+            (r'\bviter\s+batal\b', 'मौसम बताओ'),
+            (r'\bbatal\b', 'बताओ'), (r'\bbata\b', 'बताओ'),
         ]
         
         # Heavy-Duty Perso-Arabic (Urdu) to Devanagari character mapping
@@ -194,7 +170,7 @@ class AdvancedGrammarCorrector:
             from rapidfuzz import fuzz
             self.fuzz = fuzz
             self.use_fuzzy = True
-            self.fuzzy_threshold = 75
+            self.fuzzy_threshold = 95
         except ImportError:
             self.use_fuzzy = False
 
@@ -225,45 +201,16 @@ class AdvancedGrammarCorrector:
         text = re.sub(r'([a-zA-Z])\1{2,}', r'\1\1', text)  # "Gannna" → "Ganna"
         text = re.sub(r'\s+', ' ', text).strip()
         
-        # Pass 0.8: Multi-word phrase detection (NEW - CRITICAL!)
-        multi_word_patterns = {
-            r'\b(samachen|samacha|samata)\s*(batal|arvatao|arbatal)\b': 'समाचार बताओ',
-            r'\b(naatke|naatske|nacho|mujem)\s*(dikhau|dikhail|dikha)\b': 'नाचो दिखाओ',
-            r'\b(mazar|masak|mazaq)\s*(karu|sunao|suna)\b': 'मजाक सुनाओ',
-            r'\b(mosam|moosam|viter)\s*(batal|batao)\b': 'मौसम बताओ',
-            r'\b(ganna|kanna)\s*sunao\b': 'गाना सुनाओ',
-            r'\b(baka|aapka)\s*nam\s*(kya|bata)\b': 'आपका नाम',
-        }
-        
-        for pattern, replacement in multi_word_patterns.items():
-            text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
-        
         # Pass 1: Regex patterns (Case-insensitive for Romanized parts)
         corrected = text
         for pattern, replacement in self.error_patterns:
             corrected = re.sub(pattern, replacement, corrected, flags=re.IGNORECASE)
         
-        # Pass 2: Word-level phonetic correction (ENHANCED)
+        # Pass 2: Word-level fuzzy correction
         words = corrected.split()
         corrected_words = []
-        
         for word in words:
-            # Skip if already Devanagari
-            if any('\u0900' <= char <= '\u097F' for char in word):
-                corrected_words.append(word)
-                continue
-            
-            # First try existing fuzzy correction
             corrected_word = self._correct_word(word)
-            
-            # If unchanged, try phonetic matching against all vocabularies
-            if corrected_word == word and len(word) >= 3:
-                for category, vocab_list in self.core_vocabulary.items():
-                    matched = self._find_closest_match(word, vocab_list, threshold=70)
-                    if matched != word:
-                        corrected_word = matched
-                        break
-            
             corrected_words.append(corrected_word)
         
         final_text = ' '.join(corrected_words)
@@ -292,40 +239,9 @@ class AdvancedGrammarCorrector:
                     best_score = similarity
                     best_match = vocab_word
         
+        if best_score >= self.fuzzy_threshold:
             return best_match
             
-        return word
-
-    def _phonetic_similarity(self, word1, word2):
-        """Calculate phonetic similarity (0-100)"""
-        if not self.use_fuzzy:
-            return 0
-        
-        w1 = word1.lower()
-        w2 = word2.lower()
-        
-        if w1 == w2:
-            return 100
-        
-        return self.fuzz.ratio(w1, w2)
-    
-    
-    def _find_closest_match(self, word, vocab_list, threshold=70):
-        """Find closest phonetic match from vocabulary"""
-        if not self.use_fuzzy or len(word) < 3:
-            return word
-        
-        best_match = word
-        best_score = 0
-        
-        for vocab_word in vocab_list:
-            score = self._phonetic_similarity(word, vocab_word)
-            if score > best_score:
-                best_score = score
-                best_match = vocab_word
-        
-        if best_score >= threshold:
-            return best_match
         return word
 
 # ============================================================
@@ -407,11 +323,12 @@ class RobustIntentClassifier:
             'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता', 'alvida'],
             'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
-            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी', 'mazar', 'masak', 'jyod', 'hansaar', 'hasaar', 'mazaq'],
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna', 'gaana'],
-            'weather': ['मौसम', 'weather', 'बारिश', 'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal', 'mosam', 'moosam'],
-            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'samachen', 'samacha', 'samata', 'arvatao', 'arbatal'],
-            'dance': ['नाच', 'dance', 'नाचो', 'डांस', 'nacho', 'naacho', 'naatke', 'naatske', 'dikhau', 'dikhail', 'naacil', 'naacke'],
+            'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
+            'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
+            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna'],
+            'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
+            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
         }
 
     def _load_pytorch_model(self, model_path):
@@ -433,18 +350,18 @@ class RobustIntentClassifier:
         # Keep fallback patterns (add them here too)
         self.fallback_patterns = {
             'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म', 'band', 'bantuja'],
-            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'samai', 'tim', 'samaya'],
+            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'samai', 'time', 'samaya'],
             'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi'],
             'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste', 'naam', 'name', 'नाम'],
             'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता', 'alvida'],
             'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
-            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी', 'mazar', 'masak', 'jyod', 'hansaar', 'hasaar', 'mazaq'],
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna', 'gaana'],
-            'weather': ['मौसम', 'weather', 'बारिश', 'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal', 'mosam', 'moosam'],
-            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'samachen', 'samacha', 'samata', 'arvatao', 'arbatal'],
-            'dance': ['नाच', 'dance', 'नाचो', 'डांस', 'nacho', 'naacho', 'naatke', 'naatske', 'dikhau', 'dikhail', 'naacil', 'naacke'],
+            'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
+            'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
+            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna'],
             'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
+            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
         }
 
     def classify(self, text):
@@ -507,7 +424,7 @@ class RobustIntentClassifier:
             
         if scores:
             best_intent = max(scores, key=scores.get)
-            if scores[best_intent] >= 75:  # AGGRESSIVE: Lower from 95 to 75
+            if scores[best_intent] >= 95:
                 return best_intent
             
         return None
