@@ -630,11 +630,14 @@ class RealtimeVoiceAssistant:
         if os.path.exists(self.piper_model):
             try:
                 process = subprocess.Popen(
-                    [sys.executable, '-m', 'piper', '--model', self.piper_model, 
-                     '--output-raw', '--length-scale', '1.0', '--sentence-silence', '0.2'],
-                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
+                    [sys.executable, '-m', 'piper', '--model', self.piper_model, '--output-raw'],
+                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
                 )
-                audio_data, _ = process.communicate(input=text.encode('utf-8'), timeout=10)
+                audio_data, stderr_data = process.communicate(input=text.encode('utf-8'), timeout=10)
+                
+                # Check for errors
+                if process.returncode != 0 and stderr_data:
+                    print(f"   ⚠️ Piper error: {stderr_data.decode()[:150]}")
                 
                 if audio_data:
                     p = pyaudio.PyAudio()
