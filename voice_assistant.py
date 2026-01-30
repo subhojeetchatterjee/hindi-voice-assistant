@@ -170,7 +170,7 @@ class AdvancedGrammarCorrector:
             from rapidfuzz import fuzz
             self.fuzz = fuzz
             self.use_fuzzy = True
-            self.fuzzy_threshold = 95
+            self.fuzzy_threshold = 80
         except ImportError:
             self.use_fuzzy = False
 
@@ -424,7 +424,7 @@ class RobustIntentClassifier:
             
         if scores:
             best_intent = max(scores, key=scores.get)
-            if scores[best_intent] >= 95:
+            if scores[best_intent] >= 80:
                 return best_intent
             
         return None
