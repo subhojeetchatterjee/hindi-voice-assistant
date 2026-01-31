@@ -45,7 +45,7 @@ class AdvancedGrammarCorrector:
             'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'जुप्रिया', 'सुक्रिया', 'सुप्रिया', 'सुक्या', 'धनिवाद'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत'],
             # Dance intent
-            'dance': ['नाच', 'नाचो', 'डांस', 'नाचना', 'नाचकर', 'natch', 'nath', 'naach', 'राच'],
+            'dance': ['नाच', 'नाचो', 'डांस', 'नाचना', 'नाचकर', 'natch', 'nath', 'naach', 'राच', 'नज'],
             'weather': ['मौसम', 'weather', 'बारिश', 'ठंड', 'गर्मी', 'तापमान'],
             'joke': ['जोक', 'joke', 'मजाक', 'hansaao', 'mazaq', 'चुटकुला', 'जुक', 'मचाक', 'मजक'],
             # Music intent
@@ -106,7 +106,7 @@ class AdvancedGrammarCorrector:
             # MUSIC INTENT - Critical phonetic fixes
             (r'\bgana\b', 'गाना'), (r'\bgaana\b', 'गाना'), (r'\bsong\b', 'गाना'), (r'\bकाना\b', 'गाना'), (r'\bकना\b', 'गाना'), (r'\bकानो\b', 'गाना'), (r'\bबाना\b', 'गाना'), (r'\bखाना\b', 'गाना'),
             # DANCE INTENT - Critical phonetic fixes
-            (r'\bnaaj\b', 'नाच'), (r'\bnaach\b', 'नाच'), (r'\bdance\b', 'डांस'), (r'\bnaacu\b', 'नाचो'), (r'\bnaachu\b', 'नाचो'), (r'\bnachiye\b', 'नाचो'), (r'\bराच\b', 'नाच'),
+            (r'\bnaaj\b', 'नाच'), (r'\bnaach\b', 'नाच'), (r'\bdance\b', 'डांस'), (r'\bnaacu\b', 'नाचो'), (r'\bnaachu\b', 'नाचो'), (r'\bnachiye\b', 'नाचो'), (r'\bराच\b', 'नाच'), (r'\bनज\b', 'नाच'),
             (r'\bnathke\b', 'नाचके'), (r'\bnatchke\b', 'नाचके'), (r'\bnath\b', 'नाच'), (r'\bnatch\b', 'नाच'),
             (r'\balvida\b', 'अलविदा'), (r'\bbye\b', 'bye'),
             (r'\bdhanyawad\b', 'धन्यवाद'), (r'\bdhanyavad\b', 'धन्यवाद'), (r'\bdhani\b', 'धन्य'), (r'\bavad\b', 'वाद'), (r'\bdanny\b', 'धन्य'),
@@ -476,7 +476,7 @@ class RealtimeVoiceAssistant:
         self.vad = webrtcvad.Vad(2) 
         self.silence_threshold = 1.0 
         self.min_speech_duration = 0.5 
-        self.max_recording_duration = 7.0  # Shorter = less noise accumulation
+        self.max_recording_duration = 5.0  # Shorter = less noise accumulation
         
         self.audio = pyaudio.PyAudio()
         
@@ -645,7 +645,7 @@ class RealtimeVoiceAssistant:
                     p = pyaudio.PyAudio()
                     stream = p.open(format=pyaudio.paInt16, channels=1, 
                                     rate=self.piper_sample_rate, output=True,
-                                    frames_per_buffer=512)
+                                    frames_per_buffer=1024)
                     stream.write(audio_data)
                     stream.stop_stream()
                     stream.close()
