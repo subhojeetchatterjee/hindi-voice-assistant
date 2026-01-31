@@ -44,14 +44,14 @@ class AdvancedGrammarCorrector:
             'time_query': ['क्या', 'कितने', 'कितना', 'बताओ', 'बतओ', 'what', 'कैसा'],
             'date': ['तारीख', 'तिथि', 'डेट', 'date', 'दिन', 'आज'],
             'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'naam', 'name', 'नाम'],
-            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'जुप्रिया', 'सुक्रिया', 'सुप्रिया', 'सुक्या', 'धनिवाद'],
+            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'जुप्रिया', 'सुक्रिया', 'सुप्रिया', 'सुक्या', 'धनिवाद', 'जुक्रिया', 'जोक्रिया'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत'],
             # Dance intent
             'dance': ['नाच', 'नाचो', 'डांस', 'नाचना', 'नाचकर', 'natch', 'nath', 'naach', 'राच', 'नज'],
             'weather': ['मौसम', 'weather', 'बारिश', 'ठंड', 'गर्मी', 'तापमान'],
-            'joke': ['जोक', 'joke', 'मजाक', 'hansaao', 'mazaq', 'चुटकुला', 'जुक', 'मचाक', 'मजक'],
+            'joke': ['जोक', 'joke', 'मजाक', 'hansaao', 'mazaq', 'चुटकुला', 'जुक', 'मचाक', 'मजक', 'जुक्र', 'जुक्रा'],
             # Music intent
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'काना', 'कना', 'सुला', 'बाना', 'खाना'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'काना', 'कना', 'सुला', 'बाना', 'खाना', 'बंदाओ', 'बंदानाओ'],
             # News intent
             'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'social', 'society', 'samacar', 'topic', 'society', 'knife'],
         }
@@ -97,7 +97,11 @@ class AdvancedGrammarCorrector:
             (r'\bnamaste\b', 'नमस्ते'), (r'\bnamasitai\b', 'नमस्ते'),
             # THANK_YOU INTENT - Critical phonetic fixes
             (r'\bshukriya\b', 'शुक्रिया'), (r'\bshukriyaa\b', 'शुक्रिया'), (r'\bsukriya\b', 'शुक्रिया'), (r'\bsukria\b', 'शुक्रिया'),
-            (r'\bजुप्रिया\b', 'शुक्रिया'), (r'\bसुक्रिया\b', 'शुक्रिया'), (r'\bसुप्रिया\b', 'शुक्रिया'),
+            (r'\bजुप्रिया\b', 'शुक्रिया'), (r'\bसुक्रिया\b', 'शुक्रिया'), (r'\bसुप्रिया\b', 'शुक्रिया'), (r'\bजुक्रिया\b', 'शुक्रिया'),
+            # JOKE INTENT - Critical phonetic fixes
+            (r'\bजुक्र\b', 'जोक'), (r'\bजुक्रा\b', 'जोक'), (r'\bजुक\b', 'जोक'), (r'\bमजाक्र\b', 'मजाक'),
+            # MUSIC INTENT - Phonetic consistency
+            (r'\bबंदाओ\b', 'बजाओ'), (r'\bबंदानाओ\b', 'बजाओ'),
             (r'\bसुक्या\b', 'शुक्रिया'), (r'\bदहनिवाद\b', 'धन्यवाद'), (r'\bधनिवाद\b', 'धन्यवाद'),
             (r'\baaj\b', 'आज'), (r'\baach\b', 'आज'), (r'\baj\b', 'आज'), (r'\bad\b', 'आज'),
             (r'\bmadad\b', 'मदद'), (r'\bmodot\b', 'मदद'), (r'\bmodat\b', 'मदद'),
@@ -330,12 +334,12 @@ class RobustIntentClassifier:
             'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'samai', 'time', 'samaya'],
             'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi', 'din'],
             'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste', 'naam', 'name', 'नाम'],
-            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya'],
+            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya', 'जुक्रिया', 'जुप्रिया'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
             'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
             'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
-            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna', 'बंदानाओ', 'बंदाना', 'बजा', 'bajao'],
+            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी', 'जुक्र', 'जुक्रा'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna', 'बंदानाओ', 'बंदाना', 'बजा', 'bajao', 'बंदाओ'],
             'news': ['समाचार', 'न्यूज़', 'news', ' खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
         }
 
@@ -361,12 +365,12 @@ class RobustIntentClassifier:
             'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'samai', 'time', 'samaya'],
             'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi', 'din'],
             'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste', 'naam', 'name', 'नाम'],
-            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya'],
+            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya', 'जुक्रिया', 'जुप्रिया'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
             'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
             'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
-            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna', 'बंदानाओ', 'बंदाना', 'बजा', 'bajao'],
+            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी', 'जुक्र', 'जुक्रा'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna', 'बंदानाओ', 'बंदाना', 'बजा', 'bajao', 'बंदाओ'],
             'news': ['समाचार', 'न्यूज़', 'news', ' खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
         }
 
@@ -383,8 +387,12 @@ class RobustIntentClassifier:
         words = set(text.lower().split())
         if any(w in words for w in ['दिन', 'तारीख', 'तिथि', 'date', 'तारीक']):
             return "date", 0.99
-        if any(w in words for w in ['बजाओ', 'बंदानाओ', 'बंदाना', 'गाना', 'संगीत', 'music', 'song', 'बजा']):
+        if any(w in words for w in ['बजाओ', 'बंदानाओ', 'बंदाना', 'गाना', 'संगीत', 'music', 'song', 'बजा', 'बंदाओ']):
             return "music", 0.99
+        if any(w in words for w in ['जोक', 'joke', 'मजाक', 'चुटकुला', 'जुक्र', 'जुक्रा']):
+            return "joke", 0.99
+        if any(w in words for w in ['धन्यवाद', 'शुक्रिया', 'thx', 'thanks', 'जुक्रिया']):
+            return "thank_you", 0.99
         
         # Stage 1: IndicBERT
         inputs = self.tokenizer(text, return_tensors="pt", max_length=64, truncation=True, padding=True).to(self.device)
