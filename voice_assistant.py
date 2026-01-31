@@ -26,6 +26,7 @@ import webrtcvad
 from datetime import datetime
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import concurrent.futures
+import unicodedata
 
 # ============================================================
 # LAYER 2: ADVANCED GRAMMAR CORRECTION
@@ -518,11 +519,11 @@ class RealtimeVoiceAssistant:
         self.piper_sample_rate = 22050
         
         # Pre-cache ALL static responses for instant playback (Parallel)
-        print("\n[TTS] Pre-generating all static responses (Parallel)...")
+        print("\n[TTS] Pre-generating all static responses (Parallel 2-workers)...")
         self.audio_cache = {}
         
-        # Static responses that never change
-        common_responses = [
+        # Static responses that never change - Normalized to NFC
+        raw_responses = [
             "ठीक है, बंद कर रहा हूं।",
             "नमस्ते! मेरा नाम भारत AI है, मैं आपकी कैसे मदद कर सकता हूं?",
             "आपका स्वागत है!",
@@ -539,24 +540,39 @@ class RealtimeVoiceAssistant:
             "मजाक: मैंने एक बार कहा था मैं ऑफलाइन हूं, लेकिन कोई मान ही नहीं रहा था!"
         ]
         
+        # Normalize all phrases to NFC for consistent matching
+        common_responses = [unicodedata.normalize('NFC', p) for p in raw_responses]
+        
         def cache_audio(phrase):
             try:
+                # Use absolute path to python if needed, but sys.executable is usually right
                 process = subprocess.Popen(
                     [sys.executable, '-m', 'piper', '--model', self.piper_model, '--output-raw'],
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
                 )
-                audio_data, _ = process.communicate(input=phrase.encode('utf-8'), timeout=15)
-                return phrase, audio_data
-            except Exception:
-                return phrase, None
+                # Increased timeout for SBC stability
+                audio_data, stderr_data = process.communicate(input=phrase.encode('utf-8'), timeout=30)
+                
+                if process.returncode != 0:
+                    return phrase, None, f"Piper exited with code {process.returncode}: {stderr_data.decode()}"
+                
+                return phrase, audio_data, None
+            except subprocess.TimeoutExpired:
+                return phrase, None, "Timeout (30s) expired during generation"
+            except Exception as e:
+                return phrase, None, str(e)
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        # Use only 2 workers to avoid CPU/RAM starvation on SBC
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
             results = list(executor.map(cache_audio, common_responses))
-            for phrase, audio in results:
+            for phrase, audio, error in results:
                 if audio:
                     self.audio_cache[phrase] = audio
+                    # print(f"   ✓ Cached (len={len(audio)}): {phrase}")
+                else:
+                    print(f"   ⚠️ Failed to cache '{phrase[:20]}...': {error}")
         
-        print(f"   ✓ Cached {len(self.audio_cache)} responses in parallel (~{len(self.audio_cache) * 0.05:.1f}MB RAM)")
+        print(f"   ✓ Successfully cached {len(self.audio_cache)}/{len(common_responses)} responses (~{len(self.audio_cache) * 0.05:.1f}MB RAM)")
         
         self.HINDI_MONTHS = {
             'January': 'जनवरी', 'February': 'फ़रवरी', 'March': 'मार्च',
@@ -667,9 +683,12 @@ class RealtimeVoiceAssistant:
         start_tts = time.time()
         
         # Check cache first for instant playback
-        if hasattr(self, 'audio_cache') and text in self.audio_cache:
+        # Normalize input text to NFC for consistent matching
+        norm_text = unicodedata.normalize('NFC', text)
+        
+        if hasattr(self, 'audio_cache') and norm_text in self.audio_cache:
             print(f"   ✓ Using cached audio (0.0s)")
-            audio_data = self.audio_cache[text]
+            audio_data = self.audio_cache[norm_text]
             
             # Play cached audio immediately
             p = pyaudio.PyAudio()
