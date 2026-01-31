@@ -476,7 +476,7 @@ class RealtimeVoiceAssistant:
         self.vad = webrtcvad.Vad(2) 
         self.silence_threshold = 1.0 
         self.min_speech_duration = 0.5 
-        self.max_recording_duration = 5.0  # Shorter = less noise accumulation
+        self.max_recording_duration = 6.0  # Shorter = less noise accumulation
         
         self.audio = pyaudio.PyAudio()
         
@@ -515,6 +515,33 @@ class RealtimeVoiceAssistant:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         self.piper_model = os.path.join(script_dir, "models/hindi/hi_IN-rohan-medium.onnx")
         self.piper_sample_rate = 22050
+        
+        # Pre-cache common responses for instant playback
+        print("\n[TTS] Pre-generating common responses...")
+        self.audio_cache = {}
+        
+        common_responses = {
+            'stop': "ठीक है, बंद कर रहा हूं।",
+            'hello': "नमस्ते! मेरा नाम भारत AI है, मैं आपकी कैसे मदद कर सकता हूं?",
+            'goodbye': "अलविदा! फिर मिलेंगे।",
+            'thank_you': "आपका स्वागत है!",
+            'unknown': "माफ़ करें, मैं समझ नहीं पाया। कृपया फिर से बोलें।",
+            'help': "मैं समय, तारीख बता सकता हूं। आप क्या जानना चाहते हैं?"
+        }
+        
+        for intent, phrase in common_responses.items():
+            try:
+                process = subprocess.Popen(
+                    [sys.executable, '-m', 'piper', '--model', self.piper_model, '--output-raw'],
+                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                )
+                audio_data, _ = process.communicate(input=phrase.encode('utf-8'), timeout=10)
+                if audio_data:
+                    self.audio_cache[phrase] = audio_data
+            except:
+                pass
+        
+        print(f"   ✓ Cached {len(self.audio_cache)} responses (instant playback)")
         
         self.HINDI_MONTHS = {
             'January': 'जनवरी', 'February': 'फ़रवरी', 'March': 'मार्च',
@@ -627,6 +654,28 @@ class RealtimeVoiceAssistant:
         print(f"🔊 Speaking (Natural Voice)...")
         start_tts = time.time()
         
+        # Check cache first for instant playback
+        if hasattr(self, 'audio_cache') and text in self.audio_cache:
+            print(f"   ✓ Using cached audio (0.0s)")
+            audio_data = self.audio_cache[text]
+            
+            # Play cached audio immediately
+            p = pyaudio.PyAudio()
+            stream = p.open(format=pyaudio.paInt16, channels=1, 
+                            rate=self.piper_sample_rate, output=True,
+                            frames_per_buffer=256)
+            stream.write(audio_data)
+            stream.stop_stream()
+            stream.close()
+            p.terminate()
+            
+            total_time = time.time() - start_tts
+            print(f"   Total latency: {total_time:.2f}s")
+            return
+        
+        # If not cached, generate fresh audio
+        print(f"   Generating fresh audio...")
+        
         if os.path.exists(self.piper_model):
             try:
                 process = subprocess.Popen(
@@ -651,8 +700,8 @@ class RealtimeVoiceAssistant:
                     stream.close()
                     p.terminate()
                     
-                    tts_time = time.time() - start_tts
-                    print(f"   TTS latency: {tts_time:.2f}s")
+                    total_time = time.time() - start_tts
+                    print(f"   Total latency: {total_time:.2f}s")
                     return
             except subprocess.TimeoutExpired:
                 print("   ⚠️  Piper timeout, using fallback")
