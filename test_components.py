@@ -139,11 +139,9 @@ def test_robust_intent():
             ("मोसम कैसा है", "weather"),   
             ("मजाक सुनाओ", "joke"),        
             ("गाना बजाओ", "music"),       
-            ("अलार्म सेट करो", "alarm"),   
             ("समाचार बताओ", "news"),      
             
             # Phase 8 Robustness Fixes (Reported by User)
-            ("alum lakao alum", "alarm"),    # Phonetic Romanized
             ("samae batau", "time"),         # Phonetic Romanized
             ("mujay gana sumna hai", "music"), # Phonetic Romanized
             ("naaj satay hai", "dance"),     # Phonetic Romanized

@@ -36,7 +36,7 @@ class AdvancedGrammarCorrector:
     def __init__(self):
         # Core vocabulary by intent category
         self.core_vocabulary = {
-            'stop': ['बंद', 'बन्द', 'स्टॉप', 'स्टप', 'stop', 'रुको', 'रूको', 'रुक', 'बन्त', 'बन्ते', 'बंद्ते', 'बन्तोजा', 'अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता'],
+            'stop': ['बंद', 'बन्द', 'स्टॉप', 'स्टप', 'stop', 'रुको', 'रूको', 'रुक', 'बन्त', 'बन्ते', 'बंद्ते', 'बन्तोजा', 'अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय'],
             'command_stop': ['करो', 'करदो', 'कर', 'कर do', 'हो', 'हो जाओ'],
             'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'wakt', 'waqt'],
             'time_query': ['क्या', 'कितने', 'कितना', 'बताओ', 'बतओ', 'what', 'कैसा'],
@@ -50,8 +50,6 @@ class AdvancedGrammarCorrector:
             'joke': ['जोक', 'joke', 'मजाक', 'hansaao', 'mazaq', 'चुटकुला', 'जुक', 'मचाक', 'मजक'],
             # Music intent
             'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'काना', 'कना', 'सुला', 'बाना', 'खाना'],
-            # Alarm intent
-            'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
             # News intent
             'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'social', 'society', 'samacar', 'topic', 'society', 'knife'],
         }
@@ -101,7 +99,6 @@ class AdvancedGrammarCorrector:
             (r'\bसुक्या\b', 'शुक्रिया'), (r'\bदहनिवाद\b', 'धन्यवाद'), (r'\bधनिवाद\b', 'धन्यवाद'),
             (r'\baaj\b', 'आज'), (r'\baach\b', 'आज'), (r'\baj\b', 'आज'), (r'\bad\b', 'आज'),
             (r'\bmadad\b', 'मदद'), (r'\bmodot\b', 'मदद'), (r'\bmodat\b', 'मदद'),
-            (r'\balarm\b', 'अलार्म'), (r'\balum\b', 'अलार्म'), (r'\balurm\b', 'अलार्म'), (r'\balbum\b', 'अलार्म'), (r'\alaam\b', 'अलार्म'),
             (r'\bvither\b', 'मौसम'), (r'\bweather\b', 'मौसम'), (r'\bwather\b', 'मौसम'), (r'\bmoasam\b', 'मौसम'), (r'\bwethar\b', 'मौसम'), (r'\bmosaam\b', 'मौसम'), (r'\bmonsam\b', 'मौसम'), (r'\bmousam\b', 'मौसम'),
             # JOKE INTENT - Critical phonetic fixes
             (r'\bjoke\b', 'जोक'), (r'\bjok\b', 'जोक'), (r'\bजुक\b', 'जोक'),
@@ -327,7 +324,7 @@ class RobustIntentClassifier:
         
         # Robust fallback keywords for 13 intents
         self.fallback_patterns = {
-            'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म', 'band', 'bantuja', 'अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता', 'alvida'],
+            'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म', 'band', 'bantuja', 'अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'alvida'],
             'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'samai', 'time', 'samaya'],
             'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi'],
             'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste', 'naam', 'name', 'नाम'],
@@ -337,7 +334,6 @@ class RobustIntentClassifier:
             'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
             'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
             'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna'],
-            'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
             'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
         }
 
@@ -359,7 +355,7 @@ class RobustIntentClassifier:
         
         # Keep fallback patterns (add them here too)
         self.fallback_patterns = {
-            'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म', 'band', 'bantuja', 'अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता', 'alvida'],
+            'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म', 'band', 'bantuja', 'अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'alvida'],
             'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'samai', 'time', 'samaya'],
             'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi'],
             'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste', 'naam', 'name', 'नाम'],
@@ -369,7 +365,6 @@ class RobustIntentClassifier:
             'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
             'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
             'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna'],
-            'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
             'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
         }
 
@@ -624,8 +619,6 @@ class RealtimeVoiceAssistant:
             return random.choice(jokes)
         elif intent == 'music':
             return "गाना बजा रहा हूं... धुन धुन धु! वैसे मैं अभी स्पीकर से जुड़ा नहीं हूं।"
-        elif intent == 'alarm':
-            return "ठीक है, सुबह 7 बजे के लिए अलार्म सेट कर दिया है।"
         elif intent == 'news':
             return "समाचार सेवा ऑफलाइन है। लेकिन आज का दिन बहुत अच्छा है!"
         return "माफ़ करें, मैं समझ नहीं पाया। कृपया फिर से बोलें।"
