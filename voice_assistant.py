@@ -45,11 +45,11 @@ class AdvancedGrammarCorrector:
             'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'जुप्रिया', 'सुक्रिया', 'सुप्रिया', 'सुक्या', 'धनिवाद'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत'],
             # Dance intent
-            'dance': ['नाच', 'नाचो', 'डांस', 'नाचना', 'नाचकर', 'natch', 'nath', 'naach'],
+            'dance': ['नाच', 'नाचो', 'डांस', 'नाचना', 'नाचकर', 'natch', 'nath', 'naach', 'राच'],
             'weather': ['मौसम', 'weather', 'बारिश', 'ठंड', 'गर्मी', 'तापमान'],
             'joke': ['जोक', 'joke', 'मजाक', 'hansaao', 'mazaq', 'चुटकुला', 'जुक', 'मचाक', 'मजक'],
             # Music intent
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'काना', 'कना', 'सुला', 'बाना'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'काना', 'कना', 'सुला', 'बाना', 'खाना'],
             # Alarm intent
             'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
             # News intent
@@ -107,8 +107,9 @@ class AdvancedGrammarCorrector:
             (r'\bjoke\b', 'जोक'), (r'\bjok\b', 'जोक'), (r'\bजुक\b', 'जोक'),
             (r'\bmazaq\b', 'मजाक'), (r'\bmazak\b', 'मजाक'), (r'\bमचाक\b', 'मजाक'), (r'\bमजक\b', 'मजाक'),
             # MUSIC INTENT - Critical phonetic fixes
-            (r'\bgana\b', 'गाना'), (r'\bgaana\b', 'गाना'), (r'\bsong\b', 'गाना'), (r'\bकाना\b', 'गाना'), (r'\bकना\b', 'गाना'), (r'\bकानो\b', 'गाना'), (r'\bबाना\b', 'गाना'),
-            (r'\bnaaj\b', 'नाच'), (r'\bnaach\b', 'नाच'), (r'\bdance\b', 'डांस'), (r'\bnaacu\b', 'नाचो'), (r'\bnaachu\b', 'नाचो'), (r'\bnachiye\b', 'नाचो'),
+            (r'\bgana\b', 'गाना'), (r'\bgaana\b', 'गाना'), (r'\bsong\b', 'गाना'), (r'\bकाना\b', 'गाना'), (r'\bकना\b', 'गाना'), (r'\bकानो\b', 'गाना'), (r'\bबाना\b', 'गाना'), (r'\bखाना\b', 'गाना'),
+            # DANCE INTENT - Critical phonetic fixes
+            (r'\bnaaj\b', 'नाच'), (r'\bnaach\b', 'नाच'), (r'\bdance\b', 'डांस'), (r'\bnaacu\b', 'नाचो'), (r'\bnaachu\b', 'नाचो'), (r'\bnachiye\b', 'नाचो'), (r'\bराच\b', 'नाच'),
             (r'\bnathke\b', 'नाचके'), (r'\bnatchke\b', 'नाचके'), (r'\bnath\b', 'नाच'), (r'\bnatch\b', 'नाच'),
             (r'\balvida\b', 'अलविदा'), (r'\bbye\b', 'bye'),
             (r'\bdhanyawad\b', 'धन्यवाद'), (r'\bdhanyavad\b', 'धन्यवाद'), (r'\bdhani\b', 'धन्य'), (r'\bavad\b', 'वाद'), (r'\bdanny\b', 'धन्य'),
