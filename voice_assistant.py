@@ -328,15 +328,15 @@ class RobustIntentClassifier:
         self.fallback_patterns = {
             'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म', 'band', 'bantuja', 'अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'alvida'],
             'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'samai', 'time', 'samaya'],
-            'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi'],
+            'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi', 'din'],
             'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste', 'naam', 'name', 'नाम'],
             'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
             'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
             'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
             'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna'],
-            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna', 'बंदानाओ', 'बंदाना', 'बजा', 'bajao'],
+            'news': ['समाचार', 'न्यूज़', 'news', ' खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
         }
 
     def _load_pytorch_model(self, model_path):
@@ -359,15 +359,15 @@ class RobustIntentClassifier:
         self.fallback_patterns = {
             'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म', 'band', 'bantuja', 'अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'alvida'],
             'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'samai', 'time', 'samaya'],
-            'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi'],
+            'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi', 'din'],
             'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste', 'naam', 'name', 'नाम'],
             'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
             'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
             'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
             'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna'],
-            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna', 'बंदानाओ', 'बंदाना', 'बजा', 'bajao'],
+            'news': ['समाचार', 'न्यूज़', 'news', ' खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
         }
 
     def classify(self, text):
@@ -378,6 +378,13 @@ class RobustIntentClassifier:
         # Strip remaining Urdu/Arabic characters if any leaked
         text = re.sub(r'[\u0600-\u06FF]', '', text).strip()
         text = re.sub(r'(?i)\b(teeke|theke|thek|tik|ok|hlo|hey)\b', '', text).strip()
+        
+        # Stage 0: Keyword Guardrails (Hard override for absolute clarity)
+        words = set(text.lower().split())
+        if any(w in words for w in ['दिन', 'तारीख', 'तिथि', 'date', 'तारीक']):
+            return "date", 0.99
+        if any(w in words for w in ['बजाओ', 'बंदानाओ', 'बंदाना', 'गाना', 'संगीत', 'music', 'song', 'बजा']):
+            return "music", 0.99
         
         # Stage 1: IndicBERT
         inputs = self.tokenizer(text, return_tensors="pt", max_length=64, truncation=True, padding=True).to(self.device)
