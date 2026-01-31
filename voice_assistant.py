@@ -396,8 +396,21 @@ class RobustIntentClassifier:
         intent = self.id2label.get(str(idx.item()), "unknown")
         confidence = conf.item()
         
-        # High confidence? Trust IndicBERT (Increased to 0.82 for better robustness)
         if confidence >= 0.82:
+            # Stage 2: Stop Intent Sanity Check (Prevention of accidental exits)
+            if intent == "stop":
+                text_lower = text.lower()
+                words = set(text_lower.split())
+                # Must contain a stop keyword OR have extreme confidence
+                has_stop_word = any(kw.lower() in words for kw in self.fallback_patterns['stop'])
+                # Also check for substring match for compound Hindi phrases
+                if not has_stop_word:
+                    has_stop_word = any(kw.lower() in text_lower for kw in ['बंद', 'रुको', 'stop', 'exit'])
+                
+                if not has_stop_word and confidence < 0.97:
+                    print(f"⚠️  Stop intent rejected (no keyword match). Conf: {confidence:.2f}")
+                    return "unknown", confidence
+            
             return intent, confidence
             
         # Try fuzzy fallback for EVERYTHING else
@@ -405,10 +418,6 @@ class RobustIntentClassifier:
         if fallback_intent:
             print(f"✓ Fuzzy fallback matched: {fallback_intent}")
             return fallback_intent, 0.90
-            
-        # Only trust IndicBERT if confidence is very high (82%+) and fallback failed
-        if confidence >= 0.82:
-            return intent, confidence
             
         return "unknown", confidence
 
