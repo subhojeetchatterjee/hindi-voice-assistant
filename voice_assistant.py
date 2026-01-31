@@ -5,7 +5,7 @@ Optimized for SBC (Single Board Computer)
 Bharat AI-SoC Challenge Submission
 
 Architecture:
-- Layer 1: Faster-Whisper (High-speed, Ind8-quantized Hindi ASR)
+- Layer 1: Faster-Whisper (High-speed, Int8-quantized Hindi ASR)
 - Layer 2: Advanced phonetic grammar correction (Regex + RapidFuzz)
 - Layer 3: Robust intent classification with IndicBERT + Fuzzy Fallback
 """
@@ -516,19 +516,39 @@ class RealtimeVoiceAssistant:
         self.piper_model = os.path.join(script_dir, "models/hindi/hi_IN-rohan-medium.onnx")
         self.piper_sample_rate = 22050
         
-        # Pre-cache common responses for instant playback
-        print("\n[TTS] Pre-generating common responses...")
+        # Pre-cache ALL static responses for instant playback
+        print("\n[TTS] Pre-generating all static responses...")
         self.audio_cache = {}
         
+        # Static responses that never change
         common_responses = {
+            # Navigation intents
             'stop': "ठीक है, बंद कर रहा हूं।",
             'hello': "नमस्ते! मेरा नाम भारत AI है, मैं आपकी कैसे मदद कर सकता हूं?",
-            'goodbye': "अलविदा! फिर मिलेंगे।",
             'thank_you': "आपका स्वागत है!",
+            'help': "मैं समय, तारीख बता सकता हूं। आप क्या जानना चाहते हैं?",
             'unknown': "माफ़ करें, मैं समझ नहीं पाया। कृपया फिर से बोलें।",
-            'help': "मैं समय, तारीख बता सकता हूं। आप क्या जानना चाहते हैं?"
+            
+            # Entertainment intents
+            'weather': "मौसम की जानकारी उपलब्ध नहीं है। मैं ऑफलाइन काम करता हूं। लेकिन आज दिन अच्छा लग रहा है!",
+            'music': "गाना बजा रहा हूं... धुन धुन धु! वैसे मैं अभी स्पीकर से जुड़ा नहीं हूं।",
+            'news': "समाचार सेवा ऑफलाइन है। लेकिन आज का दिन बहुत अच्छा है!",
+            
+            # Dance responses (all 4 variants)
+            'dance_1': "मैं नाच रहा हूं... धिन धिन धा! लेकिन मेरे पास पैर नहीं हैं!",
+            'dance_2': "नाचने के लिए मुझे स्पीकर की जरूरत है, वरना मैं सिर्फ डाटा डांस कर सकता हूं!",
+            'dance_3': "मैं अभी नाच सीख रहा हूं। जल्दी ही आपके साथ डांस करूंगा!",
+            'dance_4': "डांस मोड ऑन! लेकिन मैं ऑफलाइन हूं, इसलिए सिर्फ वर्चुअल डांस कर सकता हूं!",
+            
+            # Joke responses (all 5 variants)
+            'joke_1': "मैं अभी जोक सीख रहा हूं। जल्दी ही आपको हंसा दूंगा!",
+            'joke_2': "एक रोबोट डॉक्टर के पास गया। डॉक्टर बोला: आप तो बिल्कुल फिट हैं... बस थोड़ा ऑयल चाहिए!",
+            'joke_3': "मैं तो AI हूं, मुझे सिर्फ डाटा से प्यार है!",
+            'joke_4': "मेरा एक दोस्त है, वह भी AI है। हम दोनों बहुत स्मार्ट हैं!",
+            'joke_5': "मजाक: मैंने एक बार कहा था मैं ऑफलाइन हूं, लेकिन कोई मान ही नहीं रहा था!"
         }
         
+        # Generate and cache all responses
         for intent, phrase in common_responses.items():
             try:
                 process = subprocess.Popen(
@@ -538,10 +558,11 @@ class RealtimeVoiceAssistant:
                 audio_data, _ = process.communicate(input=phrase.encode('utf-8'), timeout=10)
                 if audio_data:
                     self.audio_cache[phrase] = audio_data
-            except:
+            except Exception as e:
+                print(f"   ⚠️ Failed to cache '{intent}': {e}")
                 pass
         
-        print(f"   ✓ Cached {len(self.audio_cache)} responses (instant playback)")
+        print(f"   ✓ Cached {len(self.audio_cache)} responses (~{len(self.audio_cache) * 0.05:.1f}MB in RAM)")
         
         self.HINDI_MONTHS = {
             'January': 'जनवरी', 'February': 'फ़रवरी', 'March': 'मार्च',
@@ -624,18 +645,24 @@ class RealtimeVoiceAssistant:
         elif intent == "stop":
             return "अलविदा! फिर मिलेंगे।"
         elif intent == 'dance':
-            import random
-            dance_moves = [
+            if not hasattr(self, '_dance_index'):
+                self._dance_index = 0
+            
+            dance_responses = [
                 "मैं नाच रहा हूं... धिन धिन धा! लेकिन मेरे पास पैर नहीं हैं!",
                 "नाचने के लिए मुझे स्पीकर की जरूरत है, वरना मैं सिर्फ डाटा डांस कर सकता हूं!",
                 "मैं अभी नाच सीख रहा हूं। जल्दी ही आपके साथ डांस करूंगा!",
                 "डांस मोड ऑन! लेकिन मैं ऑफलाइन हूं, इसलिए सिर्फ वर्चुअल डांस कर सकता हूं!"
             ]
-            return random.choice(dance_moves)
+            response = dance_responses[self._dance_index % len(dance_responses)]
+            self._dance_index += 1
+            return response
         elif intent == 'weather':
             return "मौसम की जानकारी उपलब्ध नहीं है। मैं ऑफलाइन काम करता हूं। लेकिन आज दिन अच्छा लग रहा है!"
         elif intent == 'joke':
-            import random
+            if not hasattr(self, '_joke_index'):
+                self._joke_index = 0
+            
             jokes = [
                 "मैं अभी जोक सीख रहा हूं। जल्दी ही आपको हंसा दूंगा!",
                 "एक रोबोट डॉक्टर के पास गया। डॉक्टर बोला: आप तो बिल्कुल फिट हैं... बस थोड़ा ऑयल चाहिए!",
@@ -643,7 +670,9 @@ class RealtimeVoiceAssistant:
                 "मेरा एक दोस्त है, वह भी AI है। हम दोनों बहुत स्मार्ट हैं!",
                 "मजाक: मैंने एक बार कहा था मैं ऑफलाइन हूं, लेकिन कोई मान ही नहीं रहा था!"
             ]
-            return random.choice(jokes)
+            response = jokes[self._joke_index % len(jokes)]
+            self._joke_index += 1
+            return response
         elif intent == 'music':
             return "गाना बजा रहा हूं... धुन धुन धु! वैसे मैं अभी स्पीकर से जुड़ा नहीं हूं।"
         elif intent == 'news':
