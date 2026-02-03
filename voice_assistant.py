@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
 Real-time Hindi Voice Assistant with Faster-Whisper
-Optimized for Raspberry Pi 5 (4GB RAM)
+Optimized for SBC (Single Board Computer)
 Bharat AI-SoC Challenge Submission
 
 Architecture:
-- Layer 1: Faster-Whisper (High-speed, Ind8-quantized Hindi ASR)
+- Layer 1: Faster-Whisper (High-speed, Int8-quantized Hindi ASR)
 - Layer 2: Advanced phonetic grammar correction (Regex + RapidFuzz)
 - Layer 3: Robust intent classification with IndicBERT + Fuzzy Fallback
 """
@@ -25,6 +25,8 @@ import gc
 import webrtcvad
 from datetime import datetime
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import concurrent.futures
+import unicodedata
 
 # ============================================================
 # LAYER 2: ADVANCED GRAMMAR CORRECTION
@@ -36,30 +38,33 @@ class AdvancedGrammarCorrector:
     def __init__(self):
         # Core vocabulary by intent category
         self.core_vocabulary = {
-            'stop': ['बंद', 'बन्द', 'स्टॉप', 'स्टप', 'stop', 'रुको', 'रूको', 'रुक'],
+            'stop': ['बंद', 'बन्द', 'स्टॉप', 'स्टप', 'stop', 'रुको', 'रूको', 'रुक', 'बन्त', 'बन्ते', 'बंद्ते', 'बन्तोजा', 'अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय'],
             'command_stop': ['करो', 'करदो', 'कर', 'कर do', 'हो', 'हो जाओ'],
             'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'wakt', 'waqt'],
             'time_query': ['क्या', 'कितने', 'कितना', 'बताओ', 'बतओ', 'what', 'कैसा'],
             'date': ['तारीख', 'तिथि', 'डेट', 'date', 'दिन', 'आज'],
-            'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम'],
-            'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता'],
-            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार'],
+            'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'naam', 'name', 'नाम'],
+            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'जुप्रिया', 'सुक्रिया', 'सुप्रिया', 'सुक्या', 'धनिवाद', 'जुक्रिया', 'जोक्रिया'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत'],
             # Dance intent
-            'dance': ['नाच', 'नाचो', 'डांस', 'नाचना', 'नाचकर', 'natch', 'nath', 'naach'],
+            'dance': ['नाच', 'नाचो', 'डांस', 'नाचना', 'नाचकर', 'natch', 'nath', 'naach', 'राच', 'नज'],
             'weather': ['मौसम', 'weather', 'बारिश', 'ठंड', 'गर्मी', 'तापमान'],
-            'joke': ['जोक', 'joke', 'मजाक', 'hansaao', 'mazaq', 'चुटकुला'],
+            'joke': ['जोक', 'joke', 'मजाक', 'hansaao', 'mazaq', 'चुटकुला', 'जुक', 'मचाक', 'मजक', 'जुक्र', 'जुक्रा'],
             # Music intent
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play'],
-            # Alarm intent
-            'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'काना', 'कना', 'सुला', 'बाना', 'खाना', 'बंदाओ', 'बंदानाओ', 'पदाओ'],
             # News intent
-            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'social', 'society', 'samacar', 'topic', 'society', 'knife'],
+            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'social', 'society', 'samacar', 'topic', 'society', 'knife', 'समजार'],
         }
         
         # Critical error patterns (regex)
         self.error_patterns = [
+            # STOP INTENT - Critical phonetic fixes
             (r'\bबन\b', 'बंद'),
+            (r'\bबन्त\b', 'बंद'),
+            (r'\bबन्ते\b', 'बंद'),
+            (r'\bबंद्ते\b', 'बंद'),
+            (r'\bबन्तोजा\b', 'बंद करो'),
+            (r'\bबंद्तोजा\b', 'बंद करो'),
             (r'बन करो', 'बंद करो'),
             (r'वन करो', 'बंद करो'),
             (r'बंदकरो', 'बंद करो'),
@@ -67,7 +72,7 @@ class AdvancedGrammarCorrector:
             (r'बतओ', 'बताओ'),
             (r'क्य\b', 'क्या'),
             (r'कितन\b', 'कितने'),
-            (r'मुझ\b', 'मुझे'),
+            (r'मुझ\b', 'मुझे'), (r'\bमुजे\b', 'मुझे'),
             (r'तिथ\b', 'तिथि'),
             (r'तारिख', 'तारीख'),
             (r'करदो', 'कर दो'),
@@ -90,15 +95,26 @@ class AdvancedGrammarCorrector:
             (r'\bhai\b', 'है'), (r'\bha\b', 'है'), (r'\bhura\b', 'हो रहा'), (r'\bho\b', 'हो'), (r'\bhai\b', 'है'),
             (r'\btariq\b', 'तारीख'), (r'\btarikh\b', 'तारीख'),
             (r'\bnamaste\b', 'नमस्ते'), (r'\bnamasitai\b', 'नमस्ते'),
+            # THANK_YOU INTENT - Critical phonetic fixes
             (r'\bshukriya\b', 'शुक्रिया'), (r'\bshukriyaa\b', 'शुक्रिया'), (r'\bsukriya\b', 'शुक्रिया'), (r'\bsukria\b', 'शुक्रिया'),
+            (r'\bजुप्रिया\b', 'शुक्रिया'), (r'\bसुक्रिया\b', 'शुक्रिया'), (r'\bसुप्रिया\b', 'शुक्रिया'), (r'\bजुक्रिया\b', 'शुक्रिया'),
+            # JOKE INTENT - Critical phonetic fixes
+            (r'\bजुक्र\b', 'जोक'), (r'\bजुक्रा\b', 'जोक'), (r'\bजुक\b', 'जोक'), (r'\bमजाक्र\b', 'मजाक'),
+            # MUSIC INTENT - Phonetic consistency
+            (r'\bबंदाओ\b', 'बजाओ'), (r'\bबंदानाओ\b', 'बजाओ'), (r'\bपदाओ\b', 'बजाओ'), (r'\bकाना\b', 'गाना'),
+            # NEWS INTENT - Phonetic consistency
+            (r'\bसमजार\b', 'समाचार'), (r'\bसमचार\b', 'समाचार'),
+            (r'\bसुक्या\b', 'शुक्रिया'), (r'\bदहनिवाद\b', 'धन्यवाद'), (r'\bधनिवाद\b', 'धन्यवाद'),
             (r'\baaj\b', 'आज'), (r'\baach\b', 'आज'), (r'\baj\b', 'आज'), (r'\bad\b', 'आज'),
             (r'\bmadad\b', 'मदद'), (r'\bmodot\b', 'मदद'), (r'\bmodat\b', 'मदद'),
-            (r'\balarm\b', 'अलार्म'), (r'\balum\b', 'अलार्म'), (r'\balurm\b', 'अलार्म'), (r'\balbum\b', 'अलार्म'), (r'\alaam\b', 'अलार्म'),
             (r'\bvither\b', 'मौसम'), (r'\bweather\b', 'मौसम'), (r'\bwather\b', 'मौसम'), (r'\bmoasam\b', 'मौसम'), (r'\bwethar\b', 'मौसम'), (r'\bmosaam\b', 'मौसम'), (r'\bmonsam\b', 'मौसम'), (r'\bmousam\b', 'मौसम'),
-            (r'\bjoke\b', 'जोक'), (r'\bjok\b', 'जोक'),
-            (r'\bmazaq\b', 'मजाक'), (r'\bmazak\b', 'मजाक'),
-            (r'\bgana\b', 'गाना'), (r'\bgaana\b', 'गाना'), (r'\bsong\b', 'गाना'),
-            (r'\bnaaj\b', 'नाच'), (r'\bnaach\b', 'नाच'), (r'\bdance\b', 'डांस'), (r'\bnaacu\b', 'नाचो'), (r'\bnaachu\b', 'नाचो'), (r'\bnachiye\b', 'नाचो'),
+            # JOKE INTENT - Critical phonetic fixes
+            (r'\bjoke\b', 'जोक'), (r'\bjok\b', 'जोक'), (r'\bजुक\b', 'जोक'),
+            (r'\bmazaq\b', 'मजाक'), (r'\bmazak\b', 'मजाक'), (r'\bमचाक\b', 'मजाक'), (r'\bमजक\b', 'मजाक'),
+            # MUSIC INTENT - Critical phonetic fixes
+            (r'\bgana\b', 'गाना'), (r'\bgaana\b', 'गाना'), (r'\bsong\b', 'गाना'), (r'\bकाना\b', 'गाना'), (r'\bकना\b', 'गाना'), (r'\bकानो\b', 'गाना'), (r'\bबाना\b', 'गाना'), (r'\bखाना\b', 'गाना'),
+            # DANCE INTENT - Critical phonetic fixes
+            (r'\bnaaj\b', 'नाच'), (r'\bnaach\b', 'नाच'), (r'\bdance\b', 'डांस'), (r'\bnaacu\b', 'नाचो'), (r'\bnaachu\b', 'नाचो'), (r'\bnachiye\b', 'नाचो'), (r'\bराच\b', 'नाच'), (r'\bनज\b', 'नाच'),
             (r'\bnathke\b', 'नाचके'), (r'\bnatchke\b', 'नाचके'), (r'\bnath\b', 'नाच'), (r'\bnatch\b', 'नाच'),
             (r'\balvida\b', 'अलविदा'), (r'\bbye\b', 'bye'),
             (r'\bdhanyawad\b', 'धन्यवाद'), (r'\bdhanyavad\b', 'धन्यवाद'), (r'\bdhani\b', 'धन्य'), (r'\bavad\b', 'वाद'), (r'\bdanny\b', 'धन्य'),
@@ -117,6 +133,11 @@ class AdvancedGrammarCorrector:
             (r'banthkaru', 'बंद करो'), (r'banthkaro', 'बंद करो'), (r'sukriya', 'शुक्रिया'), (r'sukria', 'शुक्रिया'),
             (r'\bsocial\b', 'समाचार'), (r'\bsociety\b', 'समाचार'), (r'\bsamachar\b', 'समाचार'), (r'\bsamacar\b', 'समाचार'),
             (r'\btopic\b', 'समाचार'), (r'\bknife\b', 'समाचार'), (r'\buse\b', 'समाचार'), (r'\blet us know\b', 'बताओ'),
+            (r'\bsama\s*chhar\b', 'समाचार'), (r'\bsamachhar\b', 'समाचार'), (r'\bsamachar\b', 'समाचार'),
+            (r'\bchhar\b', 'समाचार'), (r'\bchahar\b', 'समाचार'), (r'\bchar\b', 'समाचार'),
+            (r'\bnews\b', 'समाचार'), (r'\bnuse\b', 'समाचार'), (r'\bnuze\b', 'समाचार'),
+            (r'\bbantuja\b', 'बंद करो'), (r'\bbantuja\s*ho\b', 'बंद करो'), (r'\bbanthoja\b', 'बंद करो'),
+            (r'\bbantujao\b', 'बंद करो'), (r'\bbandoja\b', 'बंद करो'), (r'\bbanthuja\b', 'बंद करो'),
             (r'dhannewad', 'धन्यवाद्'), (r'dhanewad', 'धन्यवाद्'),
             
             # --- Transliterated Urdu Fragment Bridge ---
@@ -135,6 +156,17 @@ class AdvancedGrammarCorrector:
             (r'\bअलरम\b', 'अलार्म'), (r'\bरमइडर\b', 'रिमाइंडर'),
             (r'\bसमचर\b', 'समाचार'), (r'\bनयज़\b', 'न्यूज़'),
             (r'\bखबर\b', 'खबर'),
+            
+            # Music intent variants (गाना)
+            (r'\bganna\b', 'गाना'), (r'\bgana\b', 'गाना'), (r'\bkanna\b', 'गाना'),
+            (r'\bkana\b', 'गाना'), (r'\bganaa\b', 'गाना'),
+            (r'\bmujhe\s+ganna\b', 'गाना'), (r'\bmujee\s+kanna\b', 'गाना'),
+            (r'\bsunao\b', 'सुनाओ'), (r'\bsuna\b', 'सुनाओ'), (r'\bsunaai\b', 'सुनाओ'), (r'\bसुला\b', 'सुनाओ'),
+            
+            # Weather intent variants (मौसम)
+            (r'\bviter\b', 'मौसम'), (r'\bwither\b', 'मौसम'), (r'\bvether\b', 'मौसम'),
+            (r'\bviter\s+batal\b', 'मौसम बताओ'),
+            (r'\bbatal\b', 'बताओ'), (r'\bbata\b', 'बताओ'),
         ]
         
         # Heavy-Duty Perso-Arabic (Urdu) to Devanagari character mapping
@@ -154,7 +186,7 @@ class AdvancedGrammarCorrector:
             from rapidfuzz import fuzz
             self.fuzz = fuzz
             self.use_fuzzy = True
-            self.fuzzy_threshold = 75
+            self.fuzzy_threshold = 80
         except ImportError:
             self.use_fuzzy = False
 
@@ -174,6 +206,16 @@ class AdvancedGrammarCorrector:
         
         # Pass 0: Aggressive Urdu-to-Hindi character transliteration
         text = self._transliterate_perso_arabic_to_devanagari(text)
+        
+        # Pass 0.5: Normalize spaces (fixes "Sama Chhar" → "samachhar")
+        text = re.sub(r'\s+', ' ', text)  # Multiple spaces → single space
+        text = text.strip()
+        
+        # Pass 0.75: Noise cleanup
+        noise_words = r'\b(umm|uh|hmm|aah|uhh|like|you know|bhujhey|mujee|aa|eh)\b'
+        text = re.sub(noise_words, '', text, flags=re.IGNORECASE)
+        text = re.sub(r'([a-zA-Z])\1{2,}', r'\1\1', text)  # "Gannna" → "Ganna"
+        text = re.sub(r'\s+', ' ', text).strip()
         
         # Pass 1: Regex patterns (Case-insensitive for Romanized parts)
         corrected = text
@@ -254,6 +296,9 @@ class RobustIntentClassifier:
 
     def _load_onnx_model(self, model_path):
         """Load ONNX-optimized model"""
+        import os
+        import json
+        import torch
         from optimum.onnxruntime import ORTModelForSequenceClassification
         
         # Load label map
@@ -278,29 +323,26 @@ class RobustIntentClassifier:
             p = psutil.Process()
             p.cpu_affinity([0, 1])  # Cores 0-1 are Cortex-A76
             print("   ✓ Process pinned to Cortex-A76 cores")
-        except Exception as e:
+        except Exception:
             pass  # Not critical
         
         # Set thread limits for 6GB RAM
-        import os
         os.environ['OMP_NUM_THREADS'] = '2'
         torch.set_num_threads(2)
         
         # Robust fallback keywords for 13 intents
         self.fallback_patterns = {
-            'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म', 'band'],
-            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'tim'],
-            'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi'],
-            'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste'],
-            'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता', 'alvida'],
-            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya'],
+            'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म', 'band', 'bantuja', 'अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'alvida'],
+            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'samai', 'time', 'samaya'],
+            'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi', 'din'],
+            'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste', 'naam', 'name', 'नाम'],
+            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya', 'जुक्रिया', 'जुप्रिया'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
             'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
-            'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान'],
-            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play'],
-            'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
-            'news': [' समाचार', ' न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट'],
+            'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
+            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी', 'जुक्र', 'जुक्रा'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna', 'बंदानाओ', 'बंदाना', 'बजा', 'bajao', 'बंदाओ'],
+            'news': ['समाचार', 'न्यूज़', 'news', ' खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
         }
 
     def _load_pytorch_model(self, model_path):
@@ -310,8 +352,7 @@ class RobustIntentClassifier:
         
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         self.model = AutoModelForSequenceClassification.from_pretrained(
-            model_path,
-            torch_dtype=torch.float32
+            model_path
         )
         self.model.eval()
         self.device = torch.device("cpu")
@@ -322,19 +363,17 @@ class RobustIntentClassifier:
         
         # Keep fallback patterns (add them here too)
         self.fallback_patterns = {
-            'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म', 'band'],
-            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'tim'],
-            'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi'],
-            'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste'],
-            'goodbye': ['अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'चलता', 'जाता', 'alvida'],
-            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya'],
+            'stop': ['बंद', 'स्टॉप', 'stop', 'रुको', 'रूको', 'exit', 'quit', 'close', 'बन्द', 'समाप्त', 'खत्म', 'band', 'bantuja', 'अलविदा', 'अलवीदा', 'बाय', 'bye', 'टाटा', 'गुडबाय', 'alvida'],
+            'time': ['समय', 'टाइम', 'time', 'बजे', 'घड़ी', 'वक्त', 'घंटा', 'घंटे', 'samay', 'samai', 'time', 'samaya'],
+            'date': ['तारीख', 'तिथि', 'डेट', 'date', 'आज', 'दिन', 'कैलेंडर', 'tariq', 'tarikh', 'tithi', 'din'],
+            'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste', 'naam', 'name', 'नाम'],
+            'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya', 'जुक्रिया', 'जुप्रिया'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
             'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
-            'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान'],
-            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी'],
-            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play'],
-            'alarm': ['अलार्म', 'alarm', 'रिमाइंडर', 'जगाओ', 'wake', 'timer'],
-            'news': [' समाचार', ' न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट'],
+            'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
+            'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी', 'जुक्र', 'जुक्रा'],
+            'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna', 'बंदानाओ', 'बंदाना', 'बजा', 'bajao', 'बंदाओ', 'काना', 'पदाओ'],
+            'news': ['समाचार', 'न्यूज़', 'news', ' खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar', 'समजार'],
         }
 
     def classify(self, text):
@@ -346,6 +385,19 @@ class RobustIntentClassifier:
         text = re.sub(r'[\u0600-\u06FF]', '', text).strip()
         text = re.sub(r'(?i)\b(teeke|theke|thek|tik|ok|hlo|hey)\b', '', text).strip()
         
+        # Stage 0: Keyword Guardrails (Hard override for absolute clarity)
+        words = set(text.lower().split())
+        if any(w in words for w in ['दिन', 'तारीख', 'तिथि', 'date', 'तारीक']):
+            return "date", 0.99
+        if any(w in words for w in ['बजाओ', 'बंदानाओ', 'बंदाना', 'गाना', 'संगीत', 'music', 'song', 'बजा', 'बंदाओ', 'काना', 'पदाओ']):
+            return "music", 0.99
+        if any(w in words for w in ['जोक', 'joke', 'मजाक', 'चुटकुला', 'जुक्र', 'जुक्रा']):
+            return "joke", 0.99
+        if any(w in words for w in ['धन्यवाद', 'शुक्रिया', 'thx', 'thanks', 'जुक्रिया']):
+            return "thank_you", 0.99
+        if any(w in words for w in ['समाचार', 'news', 'खबर', 'न्यूज़', 'समजार']):
+            return "news", 0.99
+        
         # Stage 1: IndicBERT
         inputs = self.tokenizer(text, return_tensors="pt", max_length=64, truncation=True, padding=True).to(self.device)
         with torch.no_grad():
@@ -356,8 +408,21 @@ class RobustIntentClassifier:
         intent = self.id2label.get(str(idx.item()), "unknown")
         confidence = conf.item()
         
-        # High confidence? Trust IndicBERT (Increased to 0.82 for better robustness)
         if confidence >= 0.82:
+            # Stage 2: Stop Intent Sanity Check (Prevention of accidental exits)
+            if intent == "stop":
+                text_lower = text.lower()
+                words = set(text_lower.split())
+                # Must contain a stop keyword OR have extreme confidence
+                has_stop_word = any(kw.lower() in words for kw in self.fallback_patterns['stop'])
+                # Also check for substring match for compound Hindi phrases
+                if not has_stop_word:
+                    has_stop_word = any(kw.lower() in text_lower for kw in ['बंद', 'रुको', 'stop', 'exit'])
+                
+                if not has_stop_word and confidence < 0.97:
+                    print(f"⚠️  Stop intent rejected (no keyword match). Conf: {confidence:.2f}")
+                    return "unknown", confidence
+            
             return intent, confidence
             
         # Try fuzzy fallback for EVERYTHING else
@@ -365,10 +430,6 @@ class RobustIntentClassifier:
         if fallback_intent:
             print(f"✓ Fuzzy fallback matched: {fallback_intent}")
             return fallback_intent, 0.90
-            
-        # Only trust IndicBERT if confidence is very high (82%+) and fallback failed
-        if confidence >= 0.82:
-            return intent, confidence
             
         return "unknown", confidence
 
@@ -397,10 +458,11 @@ class RobustIntentClassifier:
             
         if scores:
             best_intent = max(scores, key=scores.get)
-            if scores[best_intent] >= 95: # Higher threshold for safety
+            if scores[best_intent] >= 80:
                 return best_intent
             
         return None
+
 
 # ============================================================
 # MAIN ASSISTANT CLASS
@@ -433,7 +495,7 @@ class RealtimeVoiceAssistant:
         
         print("=" * 60)
         print("Initializing Real-time Hindi Voice Assistant")
-        print("High-Speed Optimization (Pi 5)")
+        print("High-Speed Optimization")
         print("=" * 60)
         
         self.RATE = 16000
@@ -444,23 +506,24 @@ class RealtimeVoiceAssistant:
         self.vad = webrtcvad.Vad(2) 
         self.silence_threshold = 1.0 
         self.min_speech_duration = 0.5 
-        self.max_recording_duration = 10.0
+        self.max_recording_duration = 6.0  # Shorter = less noise accumulation
         
         self.audio = pyaudio.PyAudio()
+        
         
         # Layer 1: ASR Loading (Faster-Whisper with Fallback)
         try:
             from faster_whisper import WhisperModel
             print("\n[Layer 1] Loading Faster-Whisper (Base, Int8 quantized)...")
             self.asr_model = WhisperModel(
-                "base",                     # Model size (Base for RPi 5 speed)
+                "base",                    
                 device="cpu",               # CPU inference
                 compute_type="int8",        # 8-bit quantization (Speed boost)
-                cpu_threads=4,              # Pi 5 optimization
+                cpu_threads=2,              # Only A76 cores (faster)
                 num_workers=1               # Single worker for stability
             )
             self.use_faster_whisper = True
-            print("✓ Faster-Whisper loaded (optimized for Pi 5)")
+            print("✓ Faster-Whisper loaded (optimized for SBC)")
         except Exception as e:
             print(f"⚠️  Faster-Whisper failed: {e}")
             print("   Falling back to standard Whisper (will be slower)")
@@ -482,6 +545,62 @@ class RealtimeVoiceAssistant:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         self.piper_model = os.path.join(script_dir, "models/hindi/hi_IN-rohan-medium.onnx")
         self.piper_sample_rate = 22050
+        
+        # Pre-cache ALL static responses for instant playback (Parallel)
+        print("\n[TTS] Pre-generating all static responses (Parallel 2-workers)...")
+        self.audio_cache = {}
+        
+        # Static responses that never change - Normalized to NFC
+        raw_responses = [
+            "ठीक है, बंद कर रहा हूं।",
+            "नमस्ते! मेरा नाम भारत AI है, मैं आपकी कैसे मदद कर सकता हूं?",
+            "आपका स्वागत है!",
+            "मैं समय, तारीख बता सकता हूं। आप क्या जानना चाहते हैं?",
+            "माफ़ करें, मैं समझ नहीं पाया। कृपया फिर से बोलें।",
+            "मौसम की जानकारी उपलब्ध नहीं है। मैं ऑफलाइन काम करता हूं। लेकिन आज दिन अच्छा लग रहा है!",
+            "गाना बजा रहा हूं... धुन धुन धु! वैसे मैं अभी स्पीकर से जुड़ा नहीं हूं।",
+            "समाचार सेवा ऑफलाइन है। लेकिन आज का दिन बहुत अच्छा है!",
+            "मैं नाच रहा हूं... धिन धिन धा! लेकिन मेरे पास पैर नहीं हैं!",
+            "मैं अभी जोक सीख रहा हूं। जल्दी ही आपको हंसा दूंगा!",
+            "एक रोबोट डॉक्टर के पास गया। डॉक्टर बोला: आप तो बिल्कुल फिट हैं... बस थोड़ा ऑयल चाहिए!",
+            "मैं तो AI हूं, मुझे सिर्फ डाटा से प्यार है!",
+            "मेरा एक दोस्त है, वह भी AI है। हम दोनों बहुत स्मार्ट हैं!",
+            "मजाक: मैंने एक बार कहा था मैं ऑफलाइन हूं, लेकिन कोई मान ही नहीं रहा था!"
+        ]
+        
+        # Normalize all phrases to NFC for consistent matching
+        common_responses = [unicodedata.normalize('NFC', p) for p in raw_responses]
+        
+        def cache_audio(phrase):
+            try:
+                # Use absolute path to python if needed, but sys.executable is usually right
+                process = subprocess.Popen(
+                    [sys.executable, '-m', 'piper', '--model', self.piper_model, '--output-raw'],
+                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                )
+                # Increased timeout for SBC stability
+                audio_data, stderr_data = process.communicate(input=phrase.encode('utf-8'), timeout=30)
+                
+                if process.returncode != 0:
+                    return phrase, None, f"Piper exited with code {process.returncode}: {stderr_data.decode()}"
+                
+                return phrase, audio_data, None
+            except subprocess.TimeoutExpired:
+                return phrase, None, "Timeout (30s) expired during generation"
+            except Exception as e:
+                return phrase, None, str(e)
+
+        # Use only 2 workers to avoid CPU/RAM starvation on SBC
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            results = list(executor.map(cache_audio, common_responses))
+            for phrase, audio, error in results:
+                if audio:
+                    self.audio_cache[phrase] = audio
+                    # print(f"   ✓ Cached (len={len(audio)}): {phrase}")
+                else:
+                    print(f"   ⚠️ Failed to cache '{phrase[:20]}...': {error}")
+        
+        print(f"   ✓ Successfully cached {len(self.audio_cache)}/{len(common_responses)} responses (~{len(self.audio_cache) * 0.05:.1f}MB RAM)")
         
         self.HINDI_MONTHS = {
             'January': 'जनवरी', 'February': 'फ़रवरी', 'March': 'मार्च',
@@ -550,34 +669,29 @@ class RealtimeVoiceAssistant:
 
     def generate_response(self, intent):
         now = datetime.now()
+        response = ""
+        
         if intent == "time":
-            return f"अभी समय है {now.strftime('%I:%M %p')}"
+            response = f"अभी समय है {now.strftime('%I:%M %p')}"
         elif intent == "date":
             month_hindi = self.HINDI_MONTHS.get(now.strftime('%B'), now.strftime('%B'))
-            return f"आज की तारीख है {now.day} {month_hindi} {now.year}"
+            response = f"आज की तारीख है {now.day} {month_hindi} {now.year}"
         elif intent == "hello":
-            return "नमस्ते! मैं आपकी कैसे मदद कर सकता हूं?"
-        elif intent == "goodbye":
-            return "अलविदा! फिर मिलेंगे।"
+            response = "नमस्ते! मेरा नाम भारत AI है, मैं आपकी कैसे मदद कर सकता हूं?"
         elif intent == "thank_you":
-            return "आपका स्वागत है!"
+            response = "आपका स्वागत है!"
         elif intent == "help":
-            return "मैं समय, तारीख बता सकता हूं। आप क्या जानना चाहते हैं?"
+            response = "मैं समय, तारीख बता सकता हूं। आप क्या जानना चाहते हैं?"
         elif intent == "stop":
-            return "ठीक है, बंद कर रहा हूं।"
+            response = "ठीक है, बंद कर रहा हूं।"
         elif intent == 'dance':
-            import random
-            dance_moves = [
-                "मैं नाच रहा हूं... धिन धिन धा! लेकिन मेरे पास पैर नहीं हैं!",
-                "नाचने के लिए मुझे स्पीकर की जरूरत है, वरना मैं सिर्फ डाटा डांस कर सकता हूं!",
-                "मैं अभी नाच सीख रहा हूं। जल्दी ही आपके साथ डांस करूंगा!",
-                "डांस मोड ऑन! लेकिन मैं ऑफलाइन हूं, इसलिए सिर्फ वर्चुअल डांस कर सकता हूं!"
-            ]
-            return random.choice(dance_moves)
+            response = "मैं नाच रहा हूं... धिन धिन धा! लेकिन मेरे पास पैर नहीं हैं!"
         elif intent == 'weather':
-            return "मौसम की जानकारी उपलब्ध नहीं है। मैं ऑफलाइन काम करता हूं। लेकिन आज दिन अच्छा लग रहा है!"
+            response = "मौसम की जानकारी उपलब्ध नहीं है। मैं ऑफलाइन काम करता हूं। लेकिन आज दिन अच्छा लग रहा है!"
         elif intent == 'joke':
-            import random
+            if not hasattr(self, '_joke_index'):
+                self._joke_index = 0
+            
             jokes = [
                 "मैं अभी जोक सीख रहा हूं। जल्दी ही आपको हंसा दूंगा!",
                 "एक रोबोट डॉक्टर के पास गया। डॉक्टर बोला: आप तो बिल्कुल फिट हैं... बस थोड़ा ऑयल चाहिए!",
@@ -585,70 +699,136 @@ class RealtimeVoiceAssistant:
                 "मेरा एक दोस्त है, वह भी AI है। हम दोनों बहुत स्मार्ट हैं!",
                 "मजाक: मैंने एक बार कहा था मैं ऑफलाइन हूं, लेकिन कोई मान ही नहीं रहा था!"
             ]
-            return random.choice(jokes)
+            response = jokes[self._joke_index % len(jokes)]
+            self._joke_index += 1
         elif intent == 'music':
-            return "गाना बजा रहा हूं... धुन धुन धु! वैसे मैं अभी स्पीकर से जुड़ा नहीं हूं।"
-        elif intent == 'alarm':
-            return "ठीक है, सुबह 7 बजे के लिए अलार्म सेट कर दिया है।"
+            response = "गाना बजा रहा हूं... धुन धुन धु! वैसे मैं अभी स्पीकर से जुड़ा नहीं हूं।"
         elif intent == 'news':
-            return "समाचार सेवा ऑफलाइन है। लेकिन आज का दिन बहुत अच्छा है!"
-        return "माफ़ करें, मैं समझ नहीं पाया। कृपया फिर से बोलें।"
+            response = "समाचार सेवा ऑफलाइन है। लेकिन आज का दिन बहुत अच्छा है!"
+        else:
+            response = "माफ़ करें, मैं समझ नहीं पाया। कृपया फिर से बोलें।"
+        
+        # CRITICAL: Normalize to NFC before returning to ensure cache hit
+        return unicodedata.normalize('NFC', response)
 
     def speak(self, text):
         print(f"🔊 Speaking (Natural Voice)...")
+        start_tts = time.time()
+        
+        # Check cache first for instant playback
+        # Normalize input text to NFC for consistent matching
+        norm_text = unicodedata.normalize('NFC', text)
+        
+        if hasattr(self, 'audio_cache') and norm_text in self.audio_cache:
+            print(f"   ✓ Using cached audio (0.0s)")
+            audio_data = self.audio_cache[norm_text]
+            
+            # Play cached audio immediately
+            p = pyaudio.PyAudio()
+            stream = p.open(format=pyaudio.paInt16, channels=1, 
+                            rate=self.piper_sample_rate, output=True,
+                            frames_per_buffer=256)
+            stream.write(audio_data)
+            stream.stop_stream()
+            stream.close()
+            p.terminate()
+            
+            total_time = time.time() - start_tts
+            print(f"   Total latency: {total_time:.2f}s")
+            return
+        
+        # If not cached, generate fresh audio
+        print(f"   Generating fresh audio...")
+        
         if os.path.exists(self.piper_model):
             try:
                 process = subprocess.Popen(
                     [sys.executable, '-m', 'piper', '--model', self.piper_model, '--output-raw'],
-                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
+                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
                 )
-                audio_data, _ = process.communicate(input=text.encode('utf-8'))
+                audio_data, stderr_data = process.communicate(input=text.encode('utf-8'), timeout=10)
+                
+                # Show Piper errors if any
+                if process.returncode != 0:
+                    error_msg = stderr_data.decode()[:200] if stderr_data else "Unknown error"
+                    print(f"   ⚠️ Piper failed: {error_msg}")
+                    raise Exception("Piper TTS failed")
+                
                 if audio_data:
                     p = pyaudio.PyAudio()
-                    stream = p.open(format=pyaudio.paInt16, channels=1, rate=self.piper_sample_rate, output=True)
+                    stream = p.open(format=pyaudio.paInt16, channels=1, 
+                                    rate=self.piper_sample_rate, output=True,
+                                    frames_per_buffer=1024)
                     stream.write(audio_data)
                     stream.stop_stream()
                     stream.close()
                     p.terminate()
+                    
+                    total_time = time.time() - start_tts
+                    print(f"   Total latency: {total_time:.2f}s")
                     return
-            except Exception: pass
-        subprocess.run(['espeak-ng', '-v', 'hi', text], check=False)
+            except subprocess.TimeoutExpired:
+                print("   ⚠️  Piper timeout, using fallback")
+                process.kill()
+            except Exception as e:
+                print(f"   ⚠️  Piper failed: {e}")
+        
+        # Fallback to eSpeak
+        subprocess.run(['espeak-ng', '-v', 'hi', '-s', '150', text], check=False)
 
     def run(self):
         try:
             while True:
                 if self.record_with_vad():
-                    start = time.time()
-                    
                     if self.use_faster_whisper:
-                        # Transcribe using faster-whisper
+                        # Transcribe using faster-whisper (SPEED-OPTIMIZED)
                         segments, info = self.asr_model.transcribe(
                             self.TEMP_WAV,
-                            beam_size=1,
+                            beam_size=3,
                             language="hi",
-                            initial_prompt="Hindi Assistant. No Urdu script.",
-                            vad_filter=False,
-                            condition_on_previous_text=False
+                            task="transcribe",
+                            initial_prompt="यह हिंदी वॉयस असिस्टेंट है। बंद करो। बंद हो जाओ। समय क्या है। आज कौन सा दिन है। गाना सुनाओ। मजाक सुनाओ। मौसम बताओ। नमस्ते। धन्यवाद। शुक्रिया।",
+                            vad_filter=True,
+                            condition_on_previous_text=False,
+                            best_of=1,
+                            temperature=0.0,
+                            compression_ratio_threshold=2.4,
+                            log_prob_threshold=-1.0,
+                            no_speech_threshold=0.6
                         )
+                        
+                        # Check if Hindi was detected
+                        if info.language != "hi":
+                            print(f"⚠️  Wrong language: {info.language} (prob: {info.language_probability:.0%})")
+                            print(f"   Forcing Hindi retry...")
+                            segments, info = self.asr_model.transcribe(
+                                self.TEMP_WAV,
+                                language="hi",
+                                task="transcribe",
+                                beam_size=5,
+                                initial_prompt="हिंदी हिंदी। बंद करो। बंद हो जाओ। समय क्या है। गाना सुनाओ। मजाक सुनाओ।"
+                            )
+
                         raw_text = " ".join([segment.text for segment in segments]).strip()
                     else:
                         # Fallback to standard whisper
                         result = self.asr_standard.transcribe(self.TEMP_WAV, language="hi", fp16=False)
                         raw_text = result['text'].strip()
                         
-                    print(f"📝 Raw transcription: '{raw_text}' ({time.time()-start:.2f}s)")
+                    print(f"📝 Raw transcription: '{raw_text}'")
                     
                     corrected = self.corrector.correct(raw_text)
                     
-                    start = time.time()
                     intent, conf = self.intent_classifier.classify(corrected)
-                    print(f"🎯 Intent: {intent} (confidence: {conf:.1%}, {time.time()-start:.3f}s)")
+                    print(f"🎯 Intent: {intent} (confidence: {conf:.1%})")
                     
                     response = self.generate_response(intent)
+                    
                     print(f"💬 Response: {response}")
                     self.speak(response)
                     
-                    if intent in ["stop", "goodbye"]:
+                    # Exit commands (no timeout condition)
+                    if intent == "stop":
                         print("\n👋 Goodbye!")
                         break
                     print("-" * 60)
