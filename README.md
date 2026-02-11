@@ -48,13 +48,12 @@ The easiest way to run the assistant is using the wrapper script:
 - **Interaction**: "नमस्ते", "धन्यवाद", "अलविदा"
 - **Entertainment**: "गाना बजाओ", "जोक सुनाओ", "नाचो"
 - **Information**: "समाचार बताओ", "मौसम कैसा है"
-- **Utility**: "अलार्म लगाओ"
 
 ## ⏱️ Performance Targets
-- **ASR Latency**: ~0.8s - 1.0s
-- **Intent (ONNX)**: ~0.01s (10ms)
-- **TTS (Piper)**: ~0.2s - 0.3s
-- **Total Pipeline**: **0.5s - 0.8s** on Radxa A7A.
+- **ASR Latency**: ~1.5s - 2.0s
+- **Intent (ONNX)**: ~0.1s
+- **TTS (Piper)**: ~0.1s - 0.2s (for cached responses only)
+- **Total Pipeline**: **1.7s - 2.3s** on Radxa A7A.
 
 ## 💾 Memory Management
 - **Footprint**: < 1.5GB RAM
