@@ -60,7 +60,7 @@ The easiest way to run the assistant is using the wrapper script:
 
 Please note that the performance metrics is calculated on the Radxa A7A and may vary on other SBCs!
 
-                                    *****IMPORTANT!!!*****
+#### IMPORTANT‼️ ⚠️ 🚨
 The performance metrics may change on dynamic responses like date and time queries because the responses are generated on the fly and cannot be cached.
 
 ## 💾 Memory Management
