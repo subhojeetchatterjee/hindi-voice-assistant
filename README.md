@@ -1,6 +1,6 @@
-# 🇮🇳 Offline Hindi Voice Assistant (Radxa Cubie A7A Optimized)
+# 🇮🇳 Offline Hindi Voice Assistant (SBC Optimized)
 
-This is a privacy-preserving, 100% offline Hindi voice assistant designed for the Bharat AI-SoC Challenge, optimized for the **Radxa Cubie A7A** (6GB RAM, Cortex-A76 cores).
+This is a privacy-preserving, 100% offline Hindi voice assistant designed for the Bharat AI-SoC Challenge, optimized for the **Radxa Cubie A7A** and for any SBC in general as far as it meets the hardware requirements! But I mentioned this particular SBC for the project as I am using this for the project (Specs: 6GB RAM, 2 Cortex-A76 cores and 6 A55 (efficiency) cores).
 
 ## 🚀 Key Features
 - **ONNX INT8 Integration**: Highly optimized intent classification for low latency (~10ms).
@@ -13,9 +13,12 @@ This is a privacy-preserving, 100% offline Hindi voice assistant designed for th
 - **Privacy-First**: All processing happens on-device.
 
 ## 🛠️ Hardware Requirements
-- **Board**: Radxa Cubie A7A (6GB RAM Recommended)
-- **Microphone**: USB Microphone or On-board Audio
-- **Speaker**: 3.5mm Jack / HDMI / USB Audio
+- **Board Used**: Radxa Cubie A7A 
+Minimum Requirements:
+- **RAM**: 2GB  
+- **Processor**: 2 Cortex-A76 cores(minimum)
+- **Microphone**: USB Microphone or any external audio input source
+- **Speaker**: 3.5mm Jack / HDMI / USB Audio/ Bluetooth speaker
 
 ## 📦 Installation
 
@@ -54,6 +57,8 @@ The easiest way to run the assistant is using the wrapper script:
 - **Intent (ONNX)**: ~0.1s
 - **TTS (Piper)**: ~0.1s - 0.2s (for static cached responses only)
 - **Total Pipeline**: **1.7s - 2.3s** on Radxa A7A.
+
+Please note that the performance metrics is calculated on the Radxa A7A and may vary on other SBCs!
 
                                     *****IMPORTANT!!!*****
 The performance metrics may change on dynamic responses like date and time queries because the responses are generated on the fly and cannot be cached.
