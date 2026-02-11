@@ -52,8 +52,11 @@ The easiest way to run the assistant is using the wrapper script:
 ## ⏱️ Performance Targets
 - **ASR Latency**: ~1.5s - 2.0s
 - **Intent (ONNX)**: ~0.1s
-- **TTS (Piper)**: ~0.1s - 0.2s (for cached responses only)
+- **TTS (Piper)**: ~0.1s - 0.2s (for static cached responses only)
 - **Total Pipeline**: **1.7s - 2.3s** on Radxa A7A.
+
+                                    *****IMPORTANT!!!*****
+The performance metrics may change on dynamic responses like date and time queries because the responses are generated on the fly and cannot be cached.
 
 ## 💾 Memory Management
 - **Footprint**: < 1.5GB RAM
