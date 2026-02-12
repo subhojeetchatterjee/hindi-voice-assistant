@@ -47,13 +47,13 @@ class AdvancedGrammarCorrector:
             'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'जुप्रिया', 'सुक्रिया', 'सुप्रिया', 'सुक्या', 'धनिवाद', 'जुक्रिया', 'जोक्रिया'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत'],
             # Dance intent
-            'dance': ['नाच', 'नाचो', 'डांस', 'नाचना', 'नाचकर', 'natch', 'nath', 'naach', 'राच', 'नज'],
+            'dance': ['नाच', 'नाचो', 'डांस', 'नाचना', 'नाचकर', 'natch', 'nath', 'naach', 'राच', 'नज', 'दिकार', 'तिकाओ', 'दिखाओ'],
             'weather': ['मौसम', 'weather', 'बारिश', 'ठंड', 'गर्मी', 'तापमान'],
             'joke': ['जोक', 'joke', 'मजाक', 'hansaao', 'mazaq', 'चुटकुला', 'जुक', 'मचाक', 'मजक', 'जुक्र', 'जुक्रा'],
             # Music intent
             'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'काना', 'कना', 'सुला', 'बाना', 'खाना', 'बंदाओ', 'बंदानाओ', 'पदाओ'],
             # News intent
-            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'social', 'society', 'samacar', 'topic', 'society', 'knife', 'समजार'],
+            'news': ['समाचार', 'न्यूज़', 'news', 'खबर', 'headlines', 'अपडेट', 'social', 'society', 'samacar', 'topic', 'society', 'knife', 'समजार', 'समाद्यार'],
         }
         
         # Critical error patterns (regex)
@@ -103,7 +103,7 @@ class AdvancedGrammarCorrector:
             # MUSIC INTENT - Phonetic consistency
             (r'\bबंदाओ\b', 'बजाओ'), (r'\bबंदानाओ\b', 'बजाओ'), (r'\bपदाओ\b', 'बजाओ'), (r'\bकाना\b', 'गाना'),
             # NEWS INTENT - Phonetic consistency
-            (r'\bसमजार\b', 'समाचार'), (r'\bसमचार\b', 'समाचार'),
+            (r'\bसमजार\b', 'समाचार'), (r'\bसमचार\b', 'समाचार'), (r'\bसमाद्यार\b', 'समाचार'),
             (r'\bसुक्या\b', 'शुक्रिया'), (r'\bदहनिवाद\b', 'धन्यवाद'), (r'\bधनिवाद\b', 'धन्यवाद'),
             (r'\baaj\b', 'आज'), (r'\baach\b', 'आज'), (r'\baj\b', 'आज'), (r'\bad\b', 'आज'),
             (r'\bmadad\b', 'मदद'), (r'\bmodot\b', 'मदद'), (r'\bmodat\b', 'मदद'),
@@ -138,6 +138,7 @@ class AdvancedGrammarCorrector:
             (r'\bnews\b', 'समाचार'), (r'\bnuse\b', 'समाचार'), (r'\bnuze\b', 'समाचार'),
             (r'\bbantuja\b', 'बंद करो'), (r'\bbantuja\s*ho\b', 'बंद करो'), (r'\bbanthoja\b', 'बंद करो'),
             (r'\bbantujao\b', 'बंद करो'), (r'\bbandoja\b', 'बंद करो'), (r'\bbanthuja\b', 'बंद करो'),
+            (r'अज के दिकार', 'नाच के दिखाओ'), (r'अज के तिकाओ', 'नाच के दिखाओ'), (r'अज के', 'हमें'),
             (r'dhannewad', 'धन्यवाद्'), (r'dhanewad', 'धन्यवाद्'),
             
             # --- Transliterated Urdu Fragment Bridge ---
@@ -338,11 +339,11 @@ class RobustIntentClassifier:
             'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste', 'naam', 'name', 'नाम'],
             'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya', 'जुक्रिया', 'जुप्रिया'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
-            'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
+            'dance': ['नाच', 'dance', 'नाचो', 'डांस', 'दिकार', 'तिकाओ', 'दिखाओ'],
             'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
             'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी', 'जुक्र', 'जुक्रा'],
             'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna', 'बंदानाओ', 'बंदाना', 'बजा', 'bajao', 'बंदाओ'],
-            'news': ['समाचार', 'न्यूज़', 'news', ' खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar'],
+            'news': ['समाचार', 'न्यूज़', 'news', ' खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar', 'समजार', 'समाद्यार'],
         }
 
     def _load_pytorch_model(self, model_path):
@@ -369,11 +370,11 @@ class RobustIntentClassifier:
             'hello': ['नमस्ते', 'नमस्कार', 'हैलो', 'हेलो', 'hello', 'hi', 'हाय', 'प्रणाम', 'namaste', 'naam', 'name', 'नाम'],
             'thank_you': ['धन्यवाद', 'शुक्रिया', 'thanks', 'thank', 'थैंक', 'आभार', 'शुक्रीया', 'shukriya', 'जुक्रिया', 'जुप्रिया'],
             'help': ['मदद', 'हेल्प', 'help', 'सहायता', 'सहायत', 'madad'],
-            'dance': ['नाच', 'dance', 'नाचो', 'डांस'],
+            'dance': ['नाच', 'dance', 'नाचो', 'डांस', 'दिकार', 'तिकाओ', 'दिखाओ'],
             'weather': ['मौसम', 'weather', 'बारिश' ,'ठंड', 'गर्मी', 'तापमान', 'viter', 'wither', 'vether', 'batal'],
             'joke': ['जोक', 'joke', 'मजाक', 'हँसाओ', 'funny', 'चुटकुला', 'कॉमेडी', 'जुक्र', 'जुक्रा'],
             'music': ['गाना', 'संगीत', 'music', 'song', 'बजाओ', 'चलाओ', 'play', 'ganna', 'gana', 'kanna', 'kana', 'sunao', 'suna', 'बंदानाओ', 'बंदाना', 'बजा', 'bajao', 'बंदाओ', 'काना', 'पदाओ'],
-            'news': ['समाचार', 'न्यूज़', 'news', ' खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar', 'समजार'],
+            'news': ['समाचार', 'न्यूज़', 'news', ' खबर', 'headlines', 'अपडेट', 'chhar', 'char', 'चार', 'चर', 'samachhar', 'समजार', 'समाद्यार'],
         }
 
     def classify(self, text):
@@ -395,8 +396,10 @@ class RobustIntentClassifier:
             return "joke", 0.99
         if any(w in words for w in ['धन्यवाद', 'शुक्रिया', 'thx', 'thanks', 'जुक्रिया']):
             return "thank_you", 0.99
-        if any(w in words for w in ['समाचार', 'news', 'खबर', 'न्यूज़', 'समजार']):
+        if any(w in words for w in ['समाद्यार', 'समाचार', 'news', 'खबर', 'न्यूज़', 'समजार']):
             return "news", 0.99
+        if any(w in words for w in ['नाच', 'नाचो', 'डांस', 'दिकार', 'तिकाओ']):
+            return "dance", 0.99
         
         # Stage 1: IndicBERT
         inputs = self.tokenizer(text, return_tensors="pt", max_length=64, truncation=True, padding=True).to(self.device)
