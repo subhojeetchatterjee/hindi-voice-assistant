@@ -720,6 +720,7 @@ class RealtimeVoiceAssistant:
         
         if hasattr(self, 'audio_cache') and norm_text in self.audio_cache:
             total_time = time.time() - start_tts
+            audio_data = self.audio_cache[norm_text]
             print(f"   ✓ Using cached audio (0.0s)")
             print(f"   TTS Latency: {total_time:.4f}s")
             
