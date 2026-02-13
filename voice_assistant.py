@@ -777,6 +777,7 @@ class RealtimeVoiceAssistant:
         try:
             while True:
                 if self.record_with_vad():
+                    pipeline_start = time.time()
                     if self.use_faster_whisper:
                         # Transcribe using faster-whisper (SPEED-OPTIMIZED)
                         segments, info = self.asr_model.transcribe(
@@ -823,6 +824,9 @@ class RealtimeVoiceAssistant:
                     
                     print(f"💬 Response: {response}")
                     self.speak(response)
+                    
+                    total_pipeline = time.time() - pipeline_start
+                    print(f"⏱️  Total Pipeline Latency: {total_pipeline:.2f}s")
                     
                     # Exit commands (no timeout condition)
                     if intent == "stop":
