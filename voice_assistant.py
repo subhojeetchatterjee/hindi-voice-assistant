@@ -712,17 +712,14 @@ class RealtimeVoiceAssistant:
 
     def speak(self, text):
         print(f"🔊 Speaking (Natural Voice)...")
-        start_tts = time.time()
         
         # Check cache first for instant playback
         # Normalize input text to NFC for consistent matching
         norm_text = unicodedata.normalize('NFC', text)
         
         if hasattr(self, 'audio_cache') and norm_text in self.audio_cache:
-            total_time = time.time() - start_tts
-            audio_data = self.audio_cache[norm_text]
             print(f"   ✓ Using cached audio (0.0s)")
-            print(f"   TTS Latency: {total_time:.4f}s")
+            audio_data = self.audio_cache[norm_text]
             
             # Play cached audio immediately
             p = pyaudio.PyAudio()
@@ -733,6 +730,7 @@ class RealtimeVoiceAssistant:
             stream.stop_stream()
             stream.close()
             p.terminate()
+            
             return
         
         # If not cached, generate fresh audio
@@ -753,9 +751,6 @@ class RealtimeVoiceAssistant:
                     raise Exception("Piper TTS failed")
                 
                 if audio_data:
-                    total_time = time.time() - start_tts
-                    print(f"   TTS Latency (Generation): {total_time:.2f}s")
-                    
                     p = pyaudio.PyAudio()
                     stream = p.open(format=pyaudio.paInt16, channels=1, 
                                     rate=self.piper_sample_rate, output=True,
@@ -764,6 +759,7 @@ class RealtimeVoiceAssistant:
                     stream.stop_stream()
                     stream.close()
                     p.terminate()
+                    
                     return
             except subprocess.TimeoutExpired:
                 print("   ⚠️  Piper timeout, using fallback")
@@ -778,7 +774,6 @@ class RealtimeVoiceAssistant:
         try:
             while True:
                 if self.record_with_vad():
-                    pipeline_start = time.time()
                     if self.use_faster_whisper:
                         # Transcribe using faster-whisper (SPEED-OPTIMIZED)
                         segments, info = self.asr_model.transcribe(
@@ -825,9 +820,6 @@ class RealtimeVoiceAssistant:
                     
                     print(f"💬 Response: {response}")
                     self.speak(response)
-                    
-                    total_pipeline = time.time() - pipeline_start
-                    print(f"⏱️  Total Pipeline Latency: {total_pipeline:.2f}s")
                     
                     # Exit commands (no timeout condition)
                     if intent == "stop":
