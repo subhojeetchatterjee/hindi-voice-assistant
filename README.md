@@ -73,6 +73,7 @@ The performance metrics may change on dynamic responses like date and time queri
 - `convert_indicbert_to_onnx.py`: Quantization script.
 - `optimize_system.py`: Hardware-level performance tuning.
 - `README.md`: Combined project documentation.
-
+- `run_assistant.sh`: Script to run the assistant.
+- `test_components.py`: Python code to test components before running the assistant.
 ---
 *Developed for the Bharat AI-SoC Challenge*
