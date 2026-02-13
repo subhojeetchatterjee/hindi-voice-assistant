@@ -719,8 +719,9 @@ class RealtimeVoiceAssistant:
         norm_text = unicodedata.normalize('NFC', text)
         
         if hasattr(self, 'audio_cache') and norm_text in self.audio_cache:
+            total_time = time.time() - start_tts
             print(f"   ✓ Using cached audio (0.0s)")
-            audio_data = self.audio_cache[norm_text]
+            print(f"   TTS Latency: {total_time:.4f}s")
             
             # Play cached audio immediately
             p = pyaudio.PyAudio()
@@ -731,9 +732,6 @@ class RealtimeVoiceAssistant:
             stream.stop_stream()
             stream.close()
             p.terminate()
-            
-            total_time = time.time() - start_tts
-            print(f"   Total latency: {total_time:.2f}s")
             return
         
         # If not cached, generate fresh audio
@@ -754,6 +752,9 @@ class RealtimeVoiceAssistant:
                     raise Exception("Piper TTS failed")
                 
                 if audio_data:
+                    total_time = time.time() - start_tts
+                    print(f"   TTS Latency (Generation): {total_time:.2f}s")
+                    
                     p = pyaudio.PyAudio()
                     stream = p.open(format=pyaudio.paInt16, channels=1, 
                                     rate=self.piper_sample_rate, output=True,
@@ -762,9 +763,6 @@ class RealtimeVoiceAssistant:
                     stream.stop_stream()
                     stream.close()
                     p.terminate()
-                    
-                    total_time = time.time() - start_tts
-                    print(f"   Total latency: {total_time:.2f}s")
                     return
             except subprocess.TimeoutExpired:
                 print("   ⚠️  Piper timeout, using fallback")
