@@ -29,7 +29,7 @@ cd (folder name)
 
 # 2. Run the consolidated setup script
 # This handles system dependencies, ONNX conversion, and hardware tuning
-bash setup.sh
+./setup.sh
 
 # 3. Activate Environment
 source venv/bin/activate
