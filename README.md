@@ -34,7 +34,10 @@ bash setup.sh
 # 3. Activate Environment
 source venv/bin/activate
 
-# 4. Run Assistant
+# 4. Test components
+python3 test_components.py
+
+# 5. Run Assistant
 python3 voice_assistant.py
 ```
 
