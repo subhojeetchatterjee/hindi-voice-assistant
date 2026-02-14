@@ -25,7 +25,7 @@ Minimum Requirements:
 ```bash
 # 1. Clone the repository
 git clone <repo-url>
-cd voice_assistant
+cd (folder name)
 
 # 2. Run the consolidated setup script
 # This handles system dependencies, ONNX conversion, and hardware tuning
@@ -38,7 +38,7 @@ source venv/bin/activate
 python3 test_components.py
 
 # 5. Run Assistant
-python3 voice_assistant.py
+python3 voice_assistant.py or ./run_assistant.sh
 ```
 
 ## 🎤 Usage
